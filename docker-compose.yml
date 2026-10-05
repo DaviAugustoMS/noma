@@ -1,0 +1,21 @@
+services:
+  mirofish:
+    image: ghcr.io/666ghj/mirofish:latest
+    # 加速镜像（如拉取缓慢可替换上方地址）
+    # image: ghcr.nju.edu.cn/666ghj/mirofish:latest
+    container_name: mirofish
+    env_file:
+      - .env
+    environment:
+      # Dentro do container o Flask precisa escutar em todas as interfaces;
+      # a exposição ao host fica restrita ao loopback pelas portas abaixo.
+      - FLASK_HOST=0.0.0.0
+    ports:
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:5001:5001"
+    extra_hosts:
+      # Permite usar um LLM local no host: LLM_SIM_BASE_URL=http://host.docker.internal:11434/v1
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    volumes:
+      - ./backend/uploads:/app/backend/uploads
