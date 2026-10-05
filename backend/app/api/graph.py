@@ -262,6 +262,59 @@ def _reset_project_impl(project_id: str):
 
 # ============== 接口1：上传文件并生成本体 ==============
 
+def _ontology_failure_response(error, project):
+    """Mapeia uma falha de geração de ontologia para a resposta HTTP e marca o projeto como FAILED."""
+    provider_status = getattr(error, "status_code", None)
+    request_id = getattr(error, "request_id", None)
+
+    if isinstance(error, LLMResponseError):
+        public_error = str(error)
+        response_status = 502
+        logger.exception("LLM returned an unusable ontology response")
+    elif isinstance(provider_status, int):
+        public_error = f"LLM provider request failed (HTTP {provider_status})"
+        if request_id:
+            safe_request_id = re.sub(
+                r"[^a-zA-Z0-9._:-]", "", str(request_id)
+            )[:128]
+            if safe_request_id:
+                public_error += f" (request_id: {safe_request_id})"
+        response_status = 502
+        # Provider exception bodies may echo request content. Keep the
+        # server log useful without serializing the exception body.
+        logger.error(
+            "Ontology provider request failed: type=%s status=%s request_id=%s",
+            type(error).__name__,
+            provider_status,
+            request_id or "unknown",
+        )
+    else:
+        public_error = "Ontology generation failed; check the server logs"
+        response_status = 500
+        logger.exception("Unexpected ontology generation failure")
+
+    response_data = None
+    if project is not None:
+        project.status = ProjectStatus.FAILED
+        project.error = public_error
+        try:
+            ProjectManager.save_project(project)
+        except Exception:
+            logger.exception(
+                "Failed to persist ontology failure for project %s",
+                project.project_id,
+            )
+        response_data = {"project_id": project.project_id}
+
+    payload = {
+        "success": False,
+        "error": public_error,
+    }
+    if response_data is not None:
+        payload["data"] = response_data
+    return jsonify(payload), response_status
+
+
 @graph_bp.route('/ontology/generate', methods=['POST'])
 def generate_ontology():
     """
@@ -392,55 +445,73 @@ def generate_ontology():
         })
         
     except Exception as error:
-        provider_status = getattr(error, "status_code", None)
-        request_id = getattr(error, "request_id", None)
+        return _ontology_failure_response(error, project)
 
-        if isinstance(error, LLMResponseError):
-            public_error = str(error)
-            response_status = 502
-            logger.exception("LLM returned an unusable ontology response")
-        elif isinstance(provider_status, int):
-            public_error = f"LLM provider request failed (HTTP {provider_status})"
-            if request_id:
-                safe_request_id = re.sub(
-                    r"[^a-zA-Z0-9._:-]", "", str(request_id)
-                )[:128]
-                if safe_request_id:
-                    public_error += f" (request_id: {safe_request_id})"
-            response_status = 502
-            # Provider exception bodies may echo request content. Keep the
-            # server log useful without serializing the exception body.
-            logger.error(
-                "Ontology provider request failed: type=%s status=%s request_id=%s",
-                type(error).__name__,
-                provider_status,
-                request_id or "unknown",
-            )
-        else:
-            public_error = "Ontology generation failed; check the server logs"
-            response_status = 500
-            logger.exception("Unexpected ontology generation failure")
 
-        response_data = None
-        if project is not None:
-            project.status = ProjectStatus.FAILED
-            project.error = public_error
-            try:
-                ProjectManager.save_project(project)
-            except Exception:
-                logger.exception(
-                    "Failed to persist ontology failure for project %s",
-                    project.project_id,
-                )
-            response_data = {"project_id": project.project_id}
+@graph_bp.route('/ontology/retry', methods=['POST'])
+def retry_ontology():
+    """
+    Retoma a geração de ontologia de um projeto já criado, reaproveitando os arquivos
+    e o texto extraído guardados em disco (não exige novo upload).
 
-        payload = {
-            "success": False,
-            "error": public_error,
+    Corpo: {"project_id": "proj_xxx"}
+    Só é aceito para projetos em created/failed (sem ontologia). Em ontology_generated
+    o cliente deve seguir para /build.
+    """
+    project = None
+    try:
+        data = request.get_json(silent=True) or {}
+        project_id = data.get('project_id')
+        if not project_id:
+            return jsonify({"success": False, "error": "project_id is required"}), 400
+
+        project = ProjectManager.get_project(project_id)
+        if not project:
+            return jsonify({"success": False, "error": t('api.projectNotFound', id=project_id)}), 404
+
+        if project.status not in (ProjectStatus.CREATED, ProjectStatus.FAILED) or project.ontology:
+            return jsonify({
+                "success": False,
+                "error": f"Project status '{project.status.value}' cannot retry ontology generation",
+            }), 409
+
+        all_text = ProjectManager.get_extracted_text(project_id)
+        if not all_text or not project.simulation_requirement:
+            return jsonify({
+                "success": False,
+                "error": "Stored documents or simulation requirement not found; upload again",
+            }), 422
+
+        logger.info(f"=== 重试本体生成 === 项目ID: {project_id}")
+        ontology = OntologyGenerator().generate(
+            document_texts=[all_text],
+            simulation_requirement=project.simulation_requirement,
+            additional_context=None
+        )
+
+        project.ontology = {
+            "entity_types": ontology.get("entity_types", []),
+            "edge_types": ontology.get("edge_types", [])
         }
-        if response_data is not None:
-            payload["data"] = response_data
-        return jsonify(payload), response_status
+        project.analysis_summary = ontology.get("analysis_summary", "")
+        project.status = ProjectStatus.ONTOLOGY_GENERATED
+        project.error = None
+        ProjectManager.save_project(project)
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "project_id": project.project_id,
+                "project_name": project.name,
+                "ontology": project.ontology,
+                "analysis_summary": project.analysis_summary,
+                "files": project.files,
+                "total_text_length": project.total_text_length
+            }
+        })
+
+    except Exception as error:
+        return _ontology_failure_response(error, project)
 
 
 # ============== 接口2：构建图谱 ==============

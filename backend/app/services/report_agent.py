@@ -1211,6 +1211,8 @@ class ReportAgent:
             total_entities=context.get('total_entities', 0),
             related_facts_json=json.dumps(context.get('related_facts', [])[:10], ensure_ascii=False, indent=2),
         )
+        # Modelos locais seguem o idioma do contexto (chinês): repete a instrução no fim da mensagem do usuário
+        user_prompt = f"{user_prompt}\n\n{get_language_instruction()}"
 
         try:
             response = self.llm.chat_json(
@@ -1315,6 +1317,7 @@ class ReportAgent:
             previous_content=previous_content,
             section_title=section.title,
         )
+        user_prompt = f"{user_prompt}\n\n{get_language_instruction()}"
 
         messages = [
             {"role": "system", "content": system_prompt},

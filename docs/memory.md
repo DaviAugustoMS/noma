@@ -29,6 +29,10 @@ Clone local de `666ghj/MiroFish` v0.1.0 (commit `7657031`, 1 commit no históric
 - Scripts de simulação compartilham `backend/scripts/sim_common.py` e `llm_env.py`; todos gravam `<plataforma>/actions.jsonl`. Execuções com `max_rounds` começam na primeira hora ativa dos agentes.
 - O processo de simulação permanece vivo (modo espera de entrevistas) após `*_completed`; o status final só muda quando o processo termina (`/stop` ou fechar o ambiente).
 
+- Retomada após erro: perfis de agentes são gravados em `<simulação>/profiles_checkpoint.json` (só os gerados com sucesso; descartado com `force_regenerate`); `/api/simulation/prepare` reaproveita a tarefa em andamento (`resumed: true`) e `/prepare/status` por `simulation_id` devolve o progresso real; `POST /api/graph/ontology/retry` refaz a ontologia a partir dos arquivos salvos. Em `MainView`, falha de ontologia leva ao projeto salvo e há botão "Continuar de onde parou".
+- Idioma do LLM: `locales/languages.json` (`llmInstruction`) é anexado aos prompts de sistema e, no relatório, também ao fim das mensagens do usuário; modelos locais tendem a seguir o idioma chinês dos prompts. Mudanças nesse arquivo exigem reiniciar o backend.
+- Cuidado operacional: reiniciar o backend interrompe simulações/relatórios em andamento (estado de processos em memória).
+
 ## Forbidden Patterns
 
 - Commitar `.env` (ignorado). Não ler/expor conteúdo de `.env` e `.env.openai.bak`.

@@ -47,6 +47,9 @@
 
 ## Completed
 
+- [x] Checkpoint de perfis, reaproveitamento de tarefa de preparo e retry de ontologia (testes automáticos; crash real com reinício ainda não exercitado)
+- [x] Rótulos do relatório traduzidos (en/pt/zh) e instrução de idioma do LLM reforçada (requer reinício do backend)
+
 - [x] Pipeline validado de ponta a ponta com LLM local (ontologia 128s, grafo ~20s, preparo ~4m30 para 5 entidades, simulação 2 rodadas ~70s) em 2026-10-05
 - [x] Scripts de uma plataforma passaram a registrar `actions.jsonl` e fim de simulação (Twitter 9 ações, Reddit 7 verificados)
 - [x] Relógio de simulação curta começa na primeira hora ativa; rodadas vazias são logadas

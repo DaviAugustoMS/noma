@@ -386,6 +386,17 @@ def _check_simulation_prepared(simulation_id: str) -> tuple:
         return False, {"reason": f"读取状态文件失败: {str(e)}"}
 
 
+def _find_active_prepare_task(simulation_id: str):
+    """Tarefa de preparo ainda em andamento para esta simulação (mais recente), ou None."""
+    from ..models.task import TaskManager, TaskStatus
+
+    active = {TaskStatus.PENDING.value, TaskStatus.PROCESSING.value}
+    for task in TaskManager().list_tasks("simulation_prepare"):  # mais recentes primeiro
+        if task["status"] in active and task["metadata"].get("simulation_id") == simulation_id:
+            return task
+    return None
+
+
 @simulation_bp.route('/prepare', methods=['POST'])
 def prepare_simulation():
     """
@@ -455,6 +466,31 @@ def prepare_simulation():
         force_regenerate = data.get('force_regenerate', False)
         logger.info(f"开始处理 /prepare 请求: simulation_id={simulation_id}, force_regenerate={force_regenerate}")
         
+        if force_regenerate:
+            # regeneração forçada descarta o checkpoint de perfis
+            try:
+                os.remove(os.path.join(manager._get_simulation_dir(simulation_id), "profiles_checkpoint.json"))
+            except FileNotFoundError:
+                pass
+        else:
+            # F5/retry durante um preparo em andamento: reaproveita a tarefa em vez de duplicar o trabalho de LLM
+            running = _find_active_prepare_task(simulation_id)
+            if running:
+                logger.info(f"模拟 {simulation_id} 已有进行中的准备任务 {running['task_id']}，复用")
+                return jsonify({
+                    "success": True,
+                    "data": {
+                        "simulation_id": simulation_id,
+                        "task_id": running["task_id"],
+                        "status": "preparing",
+                        "message": running.get("message") or t('api.notStartedPrepare'),
+                        "already_prepared": False,
+                        "resumed": True,
+                        "expected_entities_count": state.entities_count,
+                        "entity_types": state.entity_types,
+                    }
+                })
+
         # 检查是否已经准备完成（避免重复生成）
         if not force_regenerate:
             logger.debug(f"检查模拟 {simulation_id} 是否已准备完成...")
@@ -726,6 +762,13 @@ def get_prepare_status():
                     }
                 })
         
+        # 只有 simulation_id 但有进行中的任务：返回该任务的真实进度（而不是 not_started）
+        if not task_id and simulation_id:
+            running = _find_active_prepare_task(simulation_id)
+            if running:
+                running["already_prepared"] = False
+                return jsonify({"success": True, "data": running})
+
         # 如果没有task_id，返回错误
         if not task_id:
             if simulation_id:

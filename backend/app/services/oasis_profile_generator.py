@@ -9,6 +9,7 @@ OASIS Agent Profile生成器
 """
 
 import json
+import os
 import random
 import time
 from typing import Dict, Any, List, Optional
@@ -200,6 +201,36 @@ class OasisAgentProfile:
             "source_entity_type": self.source_entity_type,
             "created_at": self.created_at,
         }
+
+
+def load_profile_checkpoint(path: str, use_llm: bool) -> Dict[str, Dict[str, Any]]:
+    """读取人设断点文件；文件缺失、损坏或 use_llm 不一致时返回空字典。"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if data.get("version") == 1 and data.get("use_llm") == bool(use_llm):
+            profiles = data.get("profiles")
+            if isinstance(profiles, dict):
+                return profiles
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        logger.warning(f"人设断点文件不可用，将忽略: {path}: {e}")
+    return {}
+
+
+def write_profile_checkpoint(path: str, use_llm: bool, profiles: Dict[str, Dict[str, Any]]) -> None:
+    """原子写入断点文件（先写临时文件再替换，避免中断时损坏）。"""
+    tmp_path = f"{path}.tmp"
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(
+                {"version": 1, "use_llm": bool(use_llm), "profiles": profiles},
+                f, ensure_ascii=False,
+            )
+        os.replace(tmp_path, path)
+    except Exception as e:
+        logger.warning(f"写入人设断点失败: {e}")
 
 
 class OasisProfileGenerator:
@@ -900,7 +931,8 @@ class OasisProfileGenerator:
         graph_id: Optional[str] = None,
         parallel_count: int = 5,
         realtime_output_path: Optional[str] = None,
-        output_platform: str = "reddit"
+        output_platform: str = "reddit",
+        checkpoint_path: Optional[str] = None
     ) -> List[OasisAgentProfile]:
         """
         批量从实体生成Agent Profile（支持并行生成）
@@ -913,6 +945,8 @@ class OasisProfileGenerator:
             parallel_count: 并行生成数量，默认5
             realtime_output_path: 实时写入的文件路径（如果提供，每生成一个就写入一次）
             output_platform: 输出平台格式 ("reddit" 或 "twitter")
+            checkpoint_path: 断点文件路径。每成功生成一个人设就写入一次；
+                再次运行时跳过已生成的实体，从中断处继续（use_llm 不同则忽略）
             
         Returns:
             Agent Profile列表
@@ -960,6 +994,18 @@ class OasisProfileGenerator:
                 except Exception as e:
                     logger.warning(f"实时保存 profiles 失败: {e}")
         
+        # ---- 断点续传：读取已成功生成的人设 ----
+        checkpoint: Dict[str, Dict[str, Any]] = {}
+        if checkpoint_path:
+            checkpoint = load_profile_checkpoint(checkpoint_path, use_llm)
+
+        def save_checkpoint(entity_uuid: str, profile: "OasisAgentProfile"):
+            if not checkpoint_path or not entity_uuid:
+                return
+            with lock:
+                checkpoint[entity_uuid] = profile.to_dict()
+                write_profile_checkpoint(checkpoint_path, use_llm, checkpoint)
+
         # Capture locale before spawning thread pool workers
         current_locale = get_locale()
 
@@ -1000,11 +1046,36 @@ class OasisProfileGenerator:
         print(f"{'='*60}\n")
         
         # 使用线程池并行执行
+        pending = []
+        for idx, entity in enumerate(entities):
+            cached = checkpoint.get(entity.uuid) if entity.uuid else None
+            restored = None
+            if cached:
+                try:
+                    restored = OasisAgentProfile(**{**cached, "user_id": idx})
+                except Exception as e:
+                    logger.warning(f"断点人设无法还原，将重新生成: {entity.name}: {e}")
+            if restored is not None:
+                profiles[idx] = restored
+                completed_count[0] += 1
+            else:
+                pending.append((idx, entity))
+
+        if completed_count[0]:
+            logger.info(f"从断点恢复 {completed_count[0]}/{total} 个人设，剩余 {len(pending)} 个待生成")
+            save_profiles_realtime()
+            if progress_callback:
+                progress_callback(
+                    completed_count[0],
+                    total,
+                    f"已从断点恢复 {completed_count[0]}/{total}"
+                )
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_count) as executor:
             # 提交所有任务
             future_to_entity = {
                 executor.submit(generate_single_profile, idx, entity): (idx, entity)
-                for idx, entity in enumerate(entities)
+                for idx, entity in pending
             }
             
             # 收集结果
@@ -1033,6 +1104,8 @@ class OasisProfileGenerator:
                     if error:
                         logger.warning(f"[{current}/{total}] {entity.name} 使用备用人设: {error}")
                     else:
+                        # 仅缓存成功生成的人设；备用人设下次会重试
+                        save_checkpoint(entity.uuid, profile)
                         logger.info(f"[{current}/{total}] 成功生成人设: {entity.name} ({entity_type})")
                         
                 except Exception as e:
