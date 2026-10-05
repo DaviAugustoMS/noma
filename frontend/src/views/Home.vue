@@ -9,7 +9,7 @@
     <!-- 顶部导航栏 -->
     <nav class="navbar" :class="{ scrolled: isScrolled }">
       <div class="nav-brand">
-        <span class="brand-orb"></span>MIROFISH
+        <span class="brand-orb"></span>NOMA
       </div>
       <div class="nav-links">
         <div class="health-chip" :class="`is-${healthLevel}`" :title="healthMessage" role="status">
@@ -17,7 +17,7 @@
           <span class="health-text">{{ healthMessage }}</span>
         </div>
         <LanguageSwitcher />
-        <a href="https://github.com/666ghj/MiroFish" target="_blank" rel="noopener" class="github-link">
+        <a href="https://github.com/DaviAugustoMS/noma" target="_blank" rel="noopener" class="github-link">
           {{ $t('nav.visitGithub') }} <span class="arrow">↗</span>
         </a>
       </div>
@@ -73,7 +73,7 @@
             <span class="orbiter o2"></span>
             <span class="orbiter o3"></span>
             <div class="logo-container">
-              <img src="../assets/logo/MiroFish_logo_left.jpeg" alt="MiroFish Logo" class="hero-logo" />
+              <img src="../assets/logo/noma-mark.svg" alt="Noma" class="hero-logo" />
             </div>
           </div>
         </div>

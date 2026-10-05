@@ -33,6 +33,8 @@ Clone local de `666ghj/MiroFish` v0.1.0 (commit `7657031`, 1 commit no históric
 - Idioma do LLM: `locales/languages.json` (`llmInstruction`) é anexado aos prompts de sistema e, no relatório, também ao fim das mensagens do usuário; modelos locais tendem a seguir o idioma chinês dos prompts. Mudanças nesse arquivo exigem reiniciar o backend.
 - Cuidado operacional: reiniciar o backend interrompe simulações/relatórios em andamento (estado de processos em memória).
 
+- Marca: o produto agora se chama **Noma** na interface (Home, cabeçalhos, título da aba, textos en/pt/zh, `meta.title`), com logo "N" em `frontend/src/assets/logo/noma-mark.svg` e favicon `frontend/public/favicon.svg`. Internamente (loggers, `/health`, pacotes, pasta) o nome MiroFish permanece. Repositório: `github.com/DaviAugustoMS/noma`. Código derivado do MiroFish (AGPL-3.0): manter `LICENSE` e crédito ao projeto original.
+
 ## Forbidden Patterns
 
 - Commitar `.env` (ignorado). Não ler/expor conteúdo de `.env` e `.env.openai.bak`.

@@ -26,8 +26,8 @@
     "files": "arquivos"
   },
   "meta": {
-    "title": "MiroFish - Preveja Tudo",
-    "description": "MiroFish - Sistema de Simulação de Opinião em Redes Sociais"
+    "title": "Noma - Preveja Tudo",
+    "description": "Noma - Sistema de Simulação de Opinião em Redes Sociais"
   },
   "nav": {
     "visitGithub": "Visite nossa página no Github"
@@ -38,7 +38,7 @@
     "heroTitle1": "Envie Relatórios,",
     "heroTitle2": "Preveja o Futuro",
     "heroDesc": "A partir de um único documento, o {brand} extrai sementes da realidade para gerar automaticamente um mundo paralelo com até {agentScale}. Injete variáveis de uma visão de deus para encontrar o {optimalSolution} na dinâmica complexa de grupos.",
-    "heroDescBrand": "MiroFish",
+    "heroDescBrand": "Noma",
     "heroDescAgentScale": "milhões de Agentes",
     "heroDescOptimalSolution": "\"ótimo local\"",
     "slogan": "Deixe os Agentes ensaiarem o futuro, deixe as decisões prevalecerem",
@@ -67,7 +67,7 @@
     "inputParams": "Parâmetros de Entrada",
     "simulationPrompt": ">_ 02 / Prompt da Simulação",
     "promptPlaceholder": "// Descreva em linguagem natural a simulação ou a previsão que você precisa",
-    "engineBadge": "Motor: MiroFish-V1.0",
+    "engineBadge": "Motor: Noma-V1.0",
     "startEngine": "Iniciar Motor",
     "health": {
       "checking": "Verificando serviços…",
@@ -164,7 +164,7 @@
     "setupComplete": "Preparo Concluído",
     "setupCompleteDesc": "O ambiente de simulação está pronto. Agora você pode iniciar a simulação.",
     "roundsConfig": "Configuração das Rodadas da Simulação",
-    "roundsConfigDesc": "O MiroFish planeja automaticamente simular {hours} horas do mundo real, com cada rodada representando {minutesPerRound} minutos de tempo decorrido",
+    "roundsConfigDesc": "O Noma planeja automaticamente simular {hours} horas do mundo real, com cada rodada representando {minutesPerRound} minutos de tempo decorrido",
     "customToggle": "Personalizado",
     "roundsUnit": "rodadas",
     "estimatedDuration": "Para 100 Agentes: est. ~{minutes} minutos",
@@ -329,7 +329,7 @@
     "selectChatTarget": "Selecionar com quem conversar",
     "sendSurvey": "Enviar pesquisa ao mundo",
     "reportAgentChat": "Report Agent - Conversa",
-    "reportAgentDesc": "Versão conversacional do agente de geração de relatórios, com acesso a 4 ferramentas profissionais e à memória completa do MiroFish",
+    "reportAgentDesc": "Versão conversacional do agente de geração de relatórios, com acesso a 4 ferramentas profissionais e à memória completa do Noma",
     "toolInsightForge": "InsightForge: Atribuição Profunda",
     "toolInsightForgeDesc": "Alinha os dados-semente do mundo real ao estado da simulação, combinando a Memória Global/Local para uma análise de atribuição profunda entre períodos",
     "toolPanoramaSearch": "PanoramaSearch: Rastreamento Completo",
