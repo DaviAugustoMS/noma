@@ -37,6 +37,20 @@
       </div>
     </header>
 
+    <!-- Banner de retomada: o progresso fica salvo no servidor (disco) -->
+    <div v-if="error" class="resume-banner" role="alert">
+      <div class="resume-text">
+        <strong>{{ $t('main.resume.errorBanner') }}</strong>
+        <span class="resume-detail">{{ resumeDetail }}</span>
+      </div>
+      <div class="resume-actions">
+        <button class="resume-btn primary" :disabled="loading" @click="resumeCurrent">
+          {{ loading ? $t('main.resume.resuming') : (currentProjectId === 'new' ? $t('main.resume.backHome') : $t('main.resume.retry')) }}
+        </button>
+        <button v-if="currentProjectId !== 'new'" class="resume-btn" @click="router.push('/')">{{ $t('main.resume.backHome') }}</button>
+      </div>
+    </div>
+
     <!-- Main Content Area -->
     <main class="content-area">
       <!-- Left Panel: Graph -->
@@ -85,7 +99,7 @@ import { useI18n } from 'vue-i18n'
 import GraphPanel from '../components/GraphPanel.vue'
 import Step1GraphBuild from '../components/Step1GraphBuild.vue'
 import Step2EnvSetup from '../components/Step2EnvSetup.vue'
-import { generateOntology, getProject, buildGraph, getTaskStatus, getGraphData } from '../api/graph'
+import { generateOntology, retryOntology, getProject, buildGraph, getTaskStatus, getGraphData } from '../api/graph'
 import { getPendingUpload, clearPendingUpload } from '../store/pendingUpload'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import PipelineRail from '../components/PipelineRail.vue'
@@ -197,7 +211,8 @@ const initProject = async () => {
 const handleNewProject = async () => {
   const pending = getPendingUpload()
   if (!pending.isPending || pending.files.length === 0) {
-    error.value = 'No pending files found.'
+    // F5 em /process/new: os arquivos só existiam em memória
+    error.value = t('main.resume.noPendingFiles')
     addLog('Error: No pending files found for new project.')
     return
   }
@@ -229,6 +244,16 @@ const handleNewProject = async () => {
   } catch (err) {
     error.value = err.message
     addLog(`Exception in handleNewProject: ${err.message}`)
+
+    // O servidor cria o projeto e guarda os arquivos antes de chamar o LLM.
+    // Seguimos para ele: assim um F5 retoma do disco em vez de pedir novo upload.
+    const savedId = err.response?.data?.data?.project_id
+    if (savedId) {
+      clearPendingUpload()
+      currentProjectId.value = savedId
+      router.replace({ name: 'Process', params: { projectId: savedId } })
+      addLog(`Progress saved on server (project ${savedId}). Use "resume" to continue.`)
+    }
   } finally {
     loading.value = false
   }
@@ -243,8 +268,19 @@ const loadProject = async () => {
       projectData.value = res.data
       updatePhaseByStatus(res.data.status)
       addLog(`Project loaded. Status: ${res.data.status}`)
-      
-      if (res.data.status === 'ontology_generated' && !res.data.graph_id) {
+
+      const hasOntology = !!(res.data.ontology && res.data.ontology.entity_types && res.data.ontology.entity_types.length)
+      const status = res.data.status
+
+      if ((status === 'created' || status === 'failed') && !hasOntology) {
+        // ontologia não terminou: refaz a partir dos arquivos salvos no servidor
+        await resumeOntology()
+      } else if (status === 'failed' && hasOntology && !res.data.graph_id) {
+        // falhou depois da ontologia: retoma a construção do grafo
+        error.value = ''
+        addLog('Resuming graph build from saved ontology...')
+        await startBuildGraph()
+      } else if (res.data.status === 'ontology_generated' && !res.data.graph_id) {
         await startBuildGraph()
       } else if (res.data.status === 'graph_building' && res.data.graph_build_task_id) {
         currentPhase.value = 1
@@ -264,6 +300,42 @@ const loadProject = async () => {
     loading.value = false
   }
 }
+
+const resumeOntology = async () => {
+  error.value = ''
+  currentPhase.value = 0
+  ontologyProgress.value = { message: t('main.resume.resuming') }
+  addLog('Resuming ontology generation from files saved on the server...')
+  try {
+    loading.value = true
+    const res = await retryOntology(currentProjectId.value)
+    if (res.success) {
+      projectData.value = res.data
+      ontologyProgress.value = null
+      addLog(`Ontology generated successfully for project ${res.data.project_id}`)
+      await startBuildGraph()
+    } else {
+      error.value = res.error || 'Ontology generation failed'
+    }
+  } catch (err) {
+    error.value = err.message
+    addLog(`Exception in resumeOntology: ${err.message}`)
+  } finally {
+    loading.value = false
+  }
+}
+
+// botão "Continuar de onde parou"
+const resumeCurrent = async () => {
+  if (currentProjectId.value === 'new') {
+    router.push('/')
+    return
+  }
+  error.value = ''
+  await loadProject()
+}
+
+const resumeDetail = computed(() => error.value || '')
 
 const updatePhaseByStatus = (status) => {
   switch (status) {
@@ -553,5 +625,75 @@ onUnmounted(() => {
 
 .panel-wrapper.left {
   border-right: 1px solid #EAEAEA;
+}
+
+/* Banner de retomada */
+.resume-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 14px 12px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 107, 129, 0.45);
+  background: rgba(60, 14, 24, 0.55);
+  backdrop-filter: blur(14px);
+  color: #ffd2d9;
+  font-size: 13px;
+  animation: banner-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.resume-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.resume-detail {
+  color: #ffb4c0;
+  opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resume-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.resume-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.resume-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.resume-btn.primary {
+  border-color: transparent;
+  color: #02221c;
+  background: linear-gradient(110deg, #19e3c4, #3cc8ff);
+}
+
+.resume-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@keyframes banner-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
 }
 </style>

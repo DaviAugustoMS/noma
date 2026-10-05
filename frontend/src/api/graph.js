@@ -17,6 +17,19 @@ export function generateOntology(formData) {
 }
 
 /**
+ * 重试本体生成（复用服务器已保存的文件，无需重新上传）
+ * @param {string} projectId
+ * @returns {Promise}
+ */
+export function retryOntology(projectId) {
+  return service({
+    url: '/api/graph/ontology/retry',
+    method: 'post',
+    data: { project_id: projectId }
+  })
+}
+
+/**
  * 构建图谱
  * @param {Object} data - 包含project_id, graph_name等
  * @returns {Promise}
