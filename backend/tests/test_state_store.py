@@ -457,3 +457,14 @@ def test_store_is_a_noop_until_orbit_is_configured(monkeypatch):
     monkeypatch.setattr(Config, "ORBIT_SERVICE_PASSWORD", "")
     monkeypatch.setattr(Config, "ORBIT_API_TOKEN", LEGACY_TOKEN)  # legacy fallback
     assert state_store.is_state_store_configured()
+
+
+def test_tests_never_reach_a_real_orbit_even_with_credentials_in_the_environment():
+    """O conftest desliga o espelho: o .env real não pode vazar para os testes."""
+
+    assert not state_store.is_state_store_configured()
+    assert isinstance(state_store.get_state_store(), NullStateStore)
+    manager = TaskManager()
+    task_id = manager.create_task("isolation_check")  # não grava fora do processo
+    manager.update_task(task_id, progress=1)
+    assert manager.get_task(task_id).progress == 1
