@@ -67,6 +67,27 @@ def t(key: str, **kwargs) -> str:
 
 
 def get_language_instruction() -> str:
+    """Instrução de idioma para respostas em texto livre (relatórios, conversas)."""
     locale = get_locale()
     lang_config = _languages.get(locale, _languages.get(DEFAULT_LOCALE, {}))
-    return lang_config.get('llmInstruction', '请使用中文回答。')
+    return lang_config.get('llmInstruction', 'IMPORTANT: Write the entire response in Brazilian Portuguese.')
+
+
+def get_language_name() -> str:
+    """Nome do idioma selecionado, em inglês (para prompts em inglês)."""
+    locale = get_locale()
+    lang_config = _languages.get(locale, _languages.get(DEFAULT_LOCALE, {}))
+    return lang_config.get('llmLanguage', 'Brazilian Portuguese')
+
+
+def get_json_language_instruction() -> str:
+    """Instrução de idioma para respostas em JSON.
+
+    Só os valores de texto legíveis por pessoas seguem o idioma selecionado; chaves,
+    enums, nomes de campo e identificadores ficam exatamente como o schema pede.
+    """
+    return (
+        f"LANGUAGE RULE: write every human-readable text value in {get_language_name()}. "
+        "Keep JSON keys, enum values, field names and identifiers exactly as specified in the "
+        "schema (they stay in English), even when the examples or instructions are in another language."
+    )

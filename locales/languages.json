@@ -1,30 +1,37 @@
 {
   "zh": {
     "label": "中文",
-    "llmInstruction": "请使用中文回答。"
+    "llmLanguage": "Simplified Chinese",
+    "llmInstruction": "IMPORTANT: Write the entire response in Simplified Chinese (中文): titles, body text, summaries and section names. Keep proper names and technical terms as they are. 请使用中文回答。"
   },
   "en": {
     "label": "English",
+    "llmLanguage": "English",
     "llmInstruction": "IMPORTANT: Write the entire response in English (titles, body text, summaries and section names). Do not use Chinese; keep proper names and technical terms as they are."
   },
   "es": {
     "label": "Español",
+    "llmLanguage": "Spanish",
     "llmInstruction": "IMPORTANTE: Escribe TODA la respuesta en español (títulos, texto, resúmenes y nombres de secciones). No uses chino; conserva los nombres propios y términos técnicos."
   },
   "fr": {
     "label": "Français",
+    "llmLanguage": "French",
     "llmInstruction": "IMPORTANT : Rédigez TOUTE la réponse en français (titres, texte, résumés et noms de sections). N'utilisez pas le chinois ; conservez les noms propres et termes techniques."
   },
   "pt": {
     "label": "Português",
+    "llmLanguage": "Brazilian Portuguese",
     "llmInstruction": "IMPORTANTE: Escreva TODA a resposta em português do Brasil (títulos, texto, resumos e nomes de seções). Não use chinês; mantenha nomes próprios e termos técnicos como estão."
   },
   "ru": {
     "label": "Русский",
+    "llmLanguage": "Russian",
     "llmInstruction": "ВАЖНО: Пишите ВЕСЬ ответ на русском языке (заголовки, текст, резюме и названия разделов). Не используйте китайский; имена собственные и технические термины оставляйте как есть."
   },
   "de": {
     "label": "Deutsch",
+    "llmLanguage": "German",
     "llmInstruction": "WICHTIG: Schreiben Sie die GESAMTE Antwort auf Deutsch (Titel, Text, Zusammenfassungen und Abschnittsnamen). Verwenden Sie kein Chinesisch; Eigennamen und Fachbegriffe bleiben unverändert."
   }
 }

@@ -20,7 +20,7 @@ from ..services.simulation_runner import (
 )
 from ..services.zep_graph_memory_updater import ZepGraphMemoryManager
 from ..utils.logger import get_logger
-from ..utils.locale import t, get_locale, set_locale
+from ..utils.locale import t, get_locale, set_locale, get_language_instruction
 from ..utils.zep_lifecycle import get_graph_readers, graph_lifecycle_lock
 from ..models.project import ProjectManager
 
@@ -52,7 +52,10 @@ def _get_default_platform(simulation_id: str) -> str:
 
 # Prefixo de otimização do prompt de Interview
 # Adicionar este prefixo evita que o Agent chame ferramentas, respondendo diretamente em texto
-INTERVIEW_PROMPT_PREFIX = "结合你的人设、所有的过往记忆与行动，不调用任何工具直接用文本回复我："
+INTERVIEW_PROMPT_PREFIX = (
+    "Based on your persona and all of your past memories and actions, "
+    "reply to me directly in text, without calling any tools: "
+)
 
 
 def optimize_interview_prompt(prompt: str) -> str:
@@ -70,7 +73,8 @@ def optimize_interview_prompt(prompt: str) -> str:
     # Evita adicionar o prefixo em duplicidade
     if prompt.startswith(INTERVIEW_PROMPT_PREFIX):
         return prompt
-    return f"{INTERVIEW_PROMPT_PREFIX}{prompt}"
+    # A instrução de idioma vai junto: as respostas dos agentes seguem o idioma escolhido.
+    return f"{INTERVIEW_PROMPT_PREFIX}{get_language_instruction()}\n\n{prompt}"
 
 
 # ============== Interfaces de leitura de entidades ==============

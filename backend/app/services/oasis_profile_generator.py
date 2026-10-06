@@ -19,7 +19,7 @@ from datetime import datetime
 from openai import OpenAI
 from ..config import Config
 from ..utils.logger import get_logger
-from ..utils.locale import get_language_instruction, get_locale, set_locale, t
+from ..utils.locale import get_json_language_instruction, get_locale, set_locale, t
 from ..utils.openai_chat_compat import create_chat_completion, extract_chat_completion_text
 from .graph_backend import GraphBackend, get_graph_backend
 from .zep_entity_reader import EntityNode, ZepEntityReader
@@ -735,7 +735,7 @@ class OasisProfileGenerator:
     def _get_system_prompt(self, is_individual: bool) -> str:
         """获取系统提示词"""
         base_prompt = "你是社交媒体用户画像生成专家。生成详细、真实的人设用于舆论模拟,最大程度还原已有现实情况。必须返回有效的JSON格式，所有字符串值不能包含未转义的换行符。"
-        return f"{base_prompt}\n\n{get_language_instruction()}"
+        return f"{base_prompt}\n\n{get_json_language_instruction()}"
     
     def _build_individual_persona_prompt(
         self,
@@ -781,7 +781,7 @@ class OasisProfileGenerator:
 重要:
 - 所有字段值必须是字符串或数字，不要使用换行符
 - persona必须是一段连贯的文字描述
-- {get_language_instruction()} (gender字段必须用英文male/female)
+- {get_json_language_instruction()} (the gender field must be the English string male/female)
 - 内容要与实体信息保持一致
 - age必须是有效的整数，gender必须是"male"或"female"
 """
@@ -830,7 +830,7 @@ class OasisProfileGenerator:
 重要:
 - 所有字段值必须是字符串或数字，不允许null值
 - persona必须是一段连贯的文字描述，不要使用换行符
-- {get_language_instruction()} (gender字段必须用英文"other")
+- {get_json_language_instruction()} (the gender field must be the English string "other")
 - age必须是整数30，gender必须是字符串"other"
 - 机构账号发言要符合其身份定位"""
     
@@ -877,7 +877,7 @@ class OasisProfileGenerator:
                 "age": 30,  # Idade virtual da instituição
                 "gender": "other",  # Instituições usam other
                 "mbti": "ISTJ",  # Estilo institucional: rigoroso e conservador
-                "country": "中国",
+                "country": t("err.defaultCountry"),
                 "profession": "Media",
                 "interested_topics": ["General News", "Current Events", "Public Affairs"],
             }
@@ -889,7 +889,7 @@ class OasisProfileGenerator:
                 "age": 30,  # Idade virtual da instituição
                 "gender": "other",  # Instituições usam other
                 "mbti": "ISTJ",  # Estilo institucional: rigoroso e conservador
-                "country": "中国",
+                "country": t("err.defaultCountry"),
                 "profession": entity_type,
                 "interested_topics": ["Public Policy", "Community", "Official Announcements"],
             }

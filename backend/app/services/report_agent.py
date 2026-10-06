@@ -21,7 +21,7 @@ from enum import Enum
 from ..config import Config
 from ..utils.llm_client import LLMClient
 from ..utils.logger import get_logger
-from ..utils.locale import get_language_instruction, t
+from ..utils.locale import get_json_language_instruction, get_language_instruction, t
 from .zep_tools import (
     ZepToolsService, 
     SearchResult, 
@@ -1202,7 +1202,7 @@ class ReportAgent:
         if progress_callback:
             progress_callback("planning", 30, t('progress.generatingOutline'))
         
-        system_prompt = f"{PLAN_SYSTEM_PROMPT}\n\n{get_language_instruction()}"
+        system_prompt = f"{PLAN_SYSTEM_PROMPT}\n\n{get_json_language_instruction()}"
         user_prompt = PLAN_USER_PROMPT_TEMPLATE.format(
             simulation_requirement=self.simulation_requirement,
             total_nodes=context.get('graph_statistics', {}).get('total_nodes', 0),
@@ -1212,7 +1212,7 @@ class ReportAgent:
             related_facts_json=json.dumps(context.get('related_facts', [])[:10], ensure_ascii=False, indent=2),
         )
         # Modelos locais seguem o idioma do contexto (chinês): repete a instrução no fim da mensagem do usuário
-        user_prompt = f"{user_prompt}\n\n{get_language_instruction()}"
+        user_prompt = f"{user_prompt}\n\n{get_json_language_instruction()}"
 
         try:
             response = self.llm.chat_json(
@@ -1235,7 +1235,7 @@ class ReportAgent:
                 ))
             
             outline = ReportOutline(
-                title=response.get("title", "模拟分析报告"),
+                title=response.get("title", t("report.defaultReportTitle")),
                 summary=response.get("summary", ""),
                 sections=sections
             )
@@ -1250,12 +1250,12 @@ class ReportAgent:
             logger.error(t('report.outlinePlanFailed', error=str(e)))
             # Retornar o esboço padrão (3 seções, como fallback)
             return ReportOutline(
-                title="未来预测报告",
-                summary="基于模拟预测的未来趋势与风险分析",
+                title=t("report.defaultOutlineTitle"),
+                summary=t("report.defaultOutlineSummary"),
                 sections=[
-                    ReportSection(title="预测场景与核心发现"),
-                    ReportSection(title="人群行为预测分析"),
-                    ReportSection(title="趋势展望与风险提示")
+                    ReportSection(title=t("report.defaultSection1")),
+                    ReportSection(title=t("report.defaultSection2")),
+                    ReportSection(title=t("report.defaultSection3"))
                 ]
             )
     

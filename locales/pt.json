@@ -435,6 +435,17 @@
     "unknownFile": "Arquivo desconhecido"
   },
   "err": {
+    "defaultTimeReasoning": "Usando a configuração padrão de rotina diária chinesa (1 hora por rodada)",
+    "llmCallFailed": "Falha na chamada ao LLM",
+    "defaultCountry": "China",
+    "interviewNone": "Nenhuma entrevista foi concluída.",
+    "interviewApiFailed": "A chamada da API de entrevista falhou: {error}. Verifique o estado do ambiente de simulação OASIS.",
+    "interviewFailed": "A entrevista falhou: {error}. O ambiente de simulação pode ter sido encerrado; confirme que o ambiente OASIS está em execução.",
+    "interviewError": "Ocorreu um erro durante a entrevista: {error}",
+    "interviewFallbackQ1": "Qual é a sua opinião sobre {topic}?",
+    "interviewFallbackQ2": "Qual é a sua posição sobre {topic}?",
+    "interviewFallbackQ3": "Como isso afeta você ou o grupo que você representa?",
+    "interviewFallbackQ4": "Como você acha que esse problema deveria ser resolvido ou melhorado?",
     "authRequired": "Faça login para usar o Noma.",
     "authInvalid": "Sessão inválida ou expirada. Entre novamente.",
     "authForbidden": "Esta conta não tem permissão para usar o Noma.",
@@ -713,6 +724,12 @@
     "customSimRounds": "Rodadas de simulação personalizadas: {rounds} rodadas"
   },
   "report": {
+    "defaultReportTitle": "Relatório de análise da simulação",
+    "defaultOutlineTitle": "Relatório de previsão do futuro",
+    "defaultOutlineSummary": "Análise de tendências futuras e riscos com base na simulação",
+    "defaultSection1": "Cenário previsto e principais achados",
+    "defaultSection2": "Análise do comportamento previsto dos grupos",
+    "defaultSection3": "Perspectivas de tendência e alertas de risco",
     "taskStarted": "Tarefa de geração do relatório iniciada",
     "planningStart": "Iniciando o planejamento do esboço do relatório",
     "fetchSimContext": "Obtendo o contexto da simulação",

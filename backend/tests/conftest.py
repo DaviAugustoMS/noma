@@ -53,3 +53,14 @@ def _api_auth_off_by_default(monkeypatch):
     api_auth.reset_for_tests(None)
     yield
     api_auth.reset_for_tests(None)
+
+
+# O locale é thread-local e persistia entre testes (um teste que escolhia "zh" mudava as
+# mensagens do próximo). Cada teste começa e termina no idioma padrão.
+@pytest.fixture(autouse=True)
+def _reset_locale():
+    from app.utils import locale as locale_utils
+
+    locale_utils.set_locale(locale_utils.DEFAULT_LOCALE)
+    yield
+    locale_utils.set_locale(locale_utils.DEFAULT_LOCALE)

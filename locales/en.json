@@ -435,6 +435,17 @@
     "unknownFile": "Unknown file"
   },
   "err": {
+    "defaultTimeReasoning": "Using the default Chinese daily-routine configuration (1 hour per round)",
+    "llmCallFailed": "LLM call failed",
+    "defaultCountry": "China",
+    "interviewNone": "No interview was completed.",
+    "interviewApiFailed": "The interview API call failed: {error}. Check the state of the OASIS simulation environment.",
+    "interviewFailed": "The interview failed: {error}. The simulation environment may have been closed; make sure the OASIS environment is running.",
+    "interviewError": "An error occurred during the interview: {error}",
+    "interviewFallbackQ1": "What is your view on {topic}?",
+    "interviewFallbackQ2": "What is your position on {topic}?",
+    "interviewFallbackQ3": "How does this affect you or the group you represent?",
+    "interviewFallbackQ4": "How do you think this problem should be solved or improved?",
     "authRequired": "Sign in to use Noma.",
     "authInvalid": "Invalid or expired session. Sign in again.",
     "authForbidden": "This account is not allowed to use Noma.",
@@ -713,6 +724,12 @@
     "customSimRounds": "Custom simulation rounds: {rounds} rounds"
   },
   "report": {
+    "defaultReportTitle": "Simulation analysis report",
+    "defaultOutlineTitle": "Future forecast report",
+    "defaultOutlineSummary": "Analysis of future trends and risks based on the simulation",
+    "defaultSection1": "Forecast scenario and key findings",
+    "defaultSection2": "Analysis of predicted group behavior",
+    "defaultSection3": "Trend outlook and risk warnings",
     "taskStarted": "Report generation task started",
     "planningStart": "Starting report outline planning",
     "fetchSimContext": "Fetching simulation context",

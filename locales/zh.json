@@ -435,6 +435,17 @@
     "unknownFile": "未知文件"
   },
   "err": {
+    "defaultTimeReasoning": "使用默认中国人作息配置（每轮1小时）",
+    "llmCallFailed": "LLM调用失败",
+    "defaultCountry": "中国",
+    "interviewNone": "未完成任何采访",
+    "interviewApiFailed": "采访API调用失败：{error}。请检查OASIS模拟环境状态。",
+    "interviewFailed": "采访失败：{error}。模拟环境可能已关闭，请确保OASIS环境正在运行。",
+    "interviewError": "采访过程发生错误：{error}",
+    "interviewFallbackQ1": "关于{topic}，您有什么看法？",
+    "interviewFallbackQ2": "关于{topic}，您的观点是什么？",
+    "interviewFallbackQ3": "这件事对您或您所代表的群体有什么影响？",
+    "interviewFallbackQ4": "您认为应该如何解决或改进这个问题？",
     "authRequired": "请先登录后再使用 Noma。",
     "authInvalid": "会话无效或已过期，请重新登录。",
     "authForbidden": "该账号没有使用 Noma 的权限。",
@@ -713,6 +724,12 @@
     "customSimRounds": "自定义模拟轮数: {rounds} 轮"
   },
   "report": {
+    "defaultReportTitle": "模拟分析报告",
+    "defaultOutlineTitle": "未来预测报告",
+    "defaultOutlineSummary": "基于模拟预测的未来趋势与风险分析",
+    "defaultSection1": "预测场景与核心发现",
+    "defaultSection2": "人群行为预测分析",
+    "defaultSection3": "趋势展望与风险提示",
     "taskStarted": "报告生成任务开始",
     "planningStart": "开始规划报告大纲",
     "fetchSimContext": "获取模拟上下文信息",

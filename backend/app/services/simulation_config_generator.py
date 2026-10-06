@@ -20,7 +20,7 @@ from openai import OpenAI
 
 from ..config import Config
 from ..utils.logger import get_logger
-from ..utils.locale import get_language_instruction, t
+from ..utils.locale import get_json_language_instruction, t
 from ..utils.openai_chat_compat import create_chat_completion, extract_chat_completion_text
 from .zep_entity_reader import EntityNode, ZepEntityReader
 
@@ -446,7 +446,8 @@ class SimulationConfigGenerator:
                     model=self.model_name,
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt}
+                        # Repete a regra de idioma no fim: modelos locais seguem o idioma do contexto
+                        {"role": "user", "content": f"{prompt}\n\n{get_json_language_instruction()}"}
                     ],
                     response_format={"type": "json_object"},
                     temperature=0.7 - (attempt * 0.1),  # Reduzir a temperatura a cada nova tentativa
@@ -480,7 +481,7 @@ class SimulationConfigGenerator:
                 import time
                 time.sleep(2 * (attempt + 1))
         
-        raise last_error or Exception("LLM调用失败")
+        raise last_error or Exception(t("err.llmCallFailed"))
     
     def _fix_truncated_json(self, content: str) -> str:
         """修复被截断的JSON"""
@@ -588,7 +589,7 @@ class SimulationConfigGenerator:
 - reasoning (string): 简要说明为什么这样配置"""
 
         system_prompt = "你是社交媒体模拟专家。返回纯JSON格式，时间配置需符合模拟场景中目标用户群体的作息习惯。"
-        system_prompt = f"{system_prompt}\n\n{get_language_instruction()}"
+        system_prompt = f"{system_prompt}\n\n{get_json_language_instruction()}"
 
         try:
             return self._call_llm_with_retry(prompt, system_prompt)
@@ -607,7 +608,7 @@ class SimulationConfigGenerator:
             "off_peak_hours": [0, 1, 2, 3, 4, 5],
             "morning_hours": [6, 7, 8],
             "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-            "reasoning": "使用默认中国人作息配置（每轮1小时）"
+            "reasoning": t("err.defaultTimeReasoning")
         }
     
     def _parse_time_config(self, result: Dict[str, Any], num_entities: int) -> TimeSimulationConfig:
@@ -705,7 +706,7 @@ class SimulationConfigGenerator:
 }}"""
 
         system_prompt = "你是舆论分析专家。返回纯JSON格式。注意 poster_type 必须精确匹配可用实体类型。"
-        system_prompt = f"{system_prompt}\n\n{get_language_instruction()}\nIMPORTANT: The 'poster_type' field value MUST be in English PascalCase exactly matching the available entity types. Only 'content', 'narrative_direction', 'hot_topics' and 'reasoning' fields should use the specified language."
+        system_prompt = f"{system_prompt}\n\n{get_json_language_instruction()}\nIMPORTANT: The 'poster_type' field value MUST be in English PascalCase exactly matching the available entity types. Only 'content', 'narrative_direction', 'hot_topics' and 'reasoning' fields should use the specified language."
 
         try:
             return self._call_llm_with_retry(prompt, system_prompt)
@@ -869,7 +870,7 @@ class SimulationConfigGenerator:
 }}"""
 
         system_prompt = "你是社交媒体行为分析专家。返回纯JSON，配置需符合模拟场景中目标用户群体的作息习惯。"
-        system_prompt = f"{system_prompt}\n\n{get_language_instruction()}\nIMPORTANT: The 'stance' field value MUST be one of the English strings: 'supportive', 'opposing', 'neutral', 'observer'. All JSON field names and numeric values must remain unchanged. Only natural language text fields should use the specified language."
+        system_prompt = f"{system_prompt}\n\n{get_json_language_instruction()}\nIMPORTANT: The 'stance' field value MUST be one of the English strings: 'supportive', 'opposing', 'neutral', 'observer'. All JSON field names and numeric values must remain unchanged. Only natural language text fields should use the specified language."
 
         try:
             result = self._call_llm_with_retry(prompt, system_prompt)

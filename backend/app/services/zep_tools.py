@@ -8,6 +8,7 @@ Zep检索工具服务
 3. QuickSearch（简单搜索）- 快速检索
 """
 
+import re
 import time
 import json
 from typing import Dict, Any, List, Optional
@@ -16,10 +17,49 @@ from dataclasses import dataclass, field
 from ..config import Config
 from ..utils.logger import get_logger
 from ..utils.llm_client import LLMClient
-from ..utils.locale import get_locale, t
+from ..utils.locale import get_json_language_instruction, get_language_instruction, get_locale, t
 from .graph_backend import GraphBackend, GraphNotFoundError, get_graph_backend
 
 logger = get_logger('mirofish.zep_tools')
+
+# Numeração de perguntas que os agentes podem repetir nas respostas ("Question 1:",
+# "Pergunta 1:", "问题1："...). Aceita os idiomas do app para limpar o eco da numeração.
+_QUESTION_LABELS = r'(?:问题|Question|Pergunta|Pregunta|Frage|Вопрос)'
+_QUESTION_PREFIX_RE = re.compile(_QUESTION_LABELS + r'\s*\d+\s*[：:.)]\s*', re.IGNORECASE)
+_QUESTION_NUMBERED_RE = re.compile(_QUESTION_LABELS + r'\s*[1-9]', re.IGNORECASE)
+_CJK_RE = re.compile(r'[\u4e00-\u9fff]')
+
+
+def _extract_key_quotes(combined_responses: str) -> List[str]:
+    """Extrai até 3 citações-chave das respostas dos agentes (qualquer idioma do app)."""
+
+    # Limpa o texto da resposta: remove marcações, numeração, Markdown e outros ruídos
+    clean_text = re.sub(r'#{1,6}\s+', '', combined_responses)
+    clean_text = re.sub(r'\{[^}]*tool_name[^}]*\}', '', clean_text)
+    clean_text = re.sub(r'[*_`|>~\-]{2,}', '', clean_text)
+    clean_text = _QUESTION_PREFIX_RE.sub('', clean_text)
+    clean_text = re.sub(r'【[^】]+】', '', clean_text)
+
+    # Estratégia 1 (principal): frases completas e com conteúdo substancial. Divide pela
+    # pontuação chinesa e pela latina (ponto/!/? seguido de espaço).
+    sentences = re.split(r'[。！？]|(?<=[.!?])\s+', clean_text)
+    meaningful = [
+        s.strip() for s in sentences
+        if 20 <= len(s.strip()) <= 150
+        and not re.match(r'^[\s\W，,；;：:、]+', s.strip())
+        and not s.strip().startswith('{')
+        and not _QUESTION_PREFIX_RE.match(s.strip())
+    ]
+    meaningful.sort(key=len, reverse=True)
+    key_quotes = [s + ("。" if _CJK_RE.search(s) else ".") for s in meaningful[:3]]
+
+    # Estratégia 2 (complementar): textos longos entre aspas corretamente pareadas
+    if not key_quotes:
+        paired = re.findall(r'\u201c([^\u201c\u201d]{15,100})\u201d', clean_text)
+        paired += re.findall(r'\u300c([^\u300c\u300d]{15,100})\u300d', clean_text)
+        paired += re.findall(r'"([^"]{15,100})"', clean_text)
+        key_quotes = [q for q in paired if not re.match(r'^[，,；;：:、]', q)][:3]
+    return key_quotes
 
 
 @dataclass
@@ -317,10 +357,8 @@ class AgentInterview:
                     clean_quote = clean_quote[1:]
                 # Filtra conteúdo lixo que contém numeração de perguntas (perguntas 1-9)
                 skip = False
-                for d in '123456789':
-                    if f'\u95ee\u9898{d}' in clean_quote:
-                        skip = True
-                        break
+                if _QUESTION_NUMBERED_RE.search(clean_quote):
+                    skip = True
                 if skip:
                     continue
                 # Trunca conteúdo longo demais (corta no ponto final, não de forma brusca)
@@ -1088,8 +1126,9 @@ class ZepToolsService:
         try:
             response = self.llm.chat_json(
                 messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "system", "content": f"{system_prompt}\n\n{get_json_language_instruction()}"},
+                    # Repete a regra de idioma no fim: modelos locais seguem o idioma do contexto
+                    {"role": "user", "content": f"{user_prompt}\n\n{get_json_language_instruction()}"}
                 ],
                 temperature=0.3
             )
@@ -1316,15 +1355,17 @@ class ZepToolsService:
         
         # Adiciona um prefixo otimizado, restringindo o formato de resposta dos Agents
         INTERVIEW_PROMPT_PREFIX = (
-            "你正在接受一次采访。请结合你的人设、所有的过往记忆与行动，"
-            "以纯文本方式直接回答以下问题。\n"
-            "回复要求：\n"
-            "1. 直接用自然语言回答，不要调用任何工具\n"
-            "2. 不要返回JSON格式或工具调用格式\n"
-            "3. 不要使用Markdown标题（如#、##、###）\n"
-            "4. 按问题编号逐一回答，每个回答以「问题X：」开头（X为问题编号）\n"
-            "5. 每个问题的回答之间用空行分隔\n"
-            "6. 回答要有实质内容，每个问题至少回答2-3句话\n\n"
+            "You are being interviewed. Using your persona and all of your past memories and actions, "
+            "answer the following questions directly in plain text.\n"
+            "Reply requirements:\n"
+            "1. Answer in natural language; do not call any tools\n"
+            "2. Do not return JSON or a tool-call format\n"
+            "3. Do not use Markdown headings (such as #, ##, ###)\n"
+            "4. Answer the questions one by one, in order; start each answer with \"Question X:\" "
+            "(X is the question number)\n"
+            "5. Separate the answers with a blank line\n"
+            "6. Give substantive answers: at least 2-3 sentences per question\n"
+            f"7. {get_language_instruction()}\n\n"
         )
         optimized_prompt = f"{INTERVIEW_PROMPT_PREFIX}{combined_prompt}"
         
@@ -1355,7 +1396,7 @@ class ZepToolsService:
             if not api_result.get("success", False):
                 error_msg = api_result.get("error", "未知错误")
                 logger.warning(t("console.interviewApiReturnedFailure", error=error_msg))
-                result.summary = f"采访API调用失败：{error_msg}。请检查OASIS模拟环境状态。"
+                result.summary = t("err.interviewApiFailed", error=error_msg)
                 return result
             
             # Step 5: interpreta o resultado retornado pela API e constrói o objeto AgentInterview
@@ -1386,33 +1427,8 @@ class ZepToolsService:
                 response_text = f"【Twitter平台回答】\n{twitter_text}\n\n【Reddit平台回答】\n{reddit_text}"
 
                 # Extrai citações-chave (das respostas das duas plataformas)
-                import re
-                combined_responses = f"{twitter_response} {reddit_response}"
+                key_quotes = _extract_key_quotes(f"{twitter_response} {reddit_response}")
 
-                # Limpa o texto da resposta: remove marcações, numeração, Markdown e outros ruídos
-                clean_text = re.sub(r'#{1,6}\s+', '', combined_responses)
-                clean_text = re.sub(r'\{[^}]*tool_name[^}]*\}', '', clean_text)
-                clean_text = re.sub(r'[*_`|>~\-]{2,}', '', clean_text)
-                clean_text = re.sub(r'问题\d+[：:]\s*', '', clean_text)
-                clean_text = re.sub(r'【[^】]+】', '', clean_text)
-
-                # Estratégia 1 (principal): extrai frases completas e com conteúdo substancial
-                sentences = re.split(r'[。！？]', clean_text)
-                meaningful = [
-                    s.strip() for s in sentences
-                    if 20 <= len(s.strip()) <= 150
-                    and not re.match(r'^[\s\W，,；;：:、]+', s.strip())
-                    and not s.strip().startswith(('{', '问题'))
-                ]
-                meaningful.sort(key=len, reverse=True)
-                key_quotes = [s + "。" for s in meaningful[:3]]
-
-                # Estratégia 2 (complementar): textos longos entre aspas chinesas “” corretamente pareadas
-                if not key_quotes:
-                    paired = re.findall(r'\u201c([^\u201c\u201d]{15,100})\u201d', clean_text)
-                    paired += re.findall(r'\u300c([^\u300c\u300d]{15,100})\u300d', clean_text)
-                    key_quotes = [q for q in paired if not re.match(r'^[，,；;：:、]', q)][:3]
-                
                 interview = AgentInterview(
                     agent_name=agent_name,
                     agent_role=agent_role,
@@ -1428,13 +1444,13 @@ class ZepToolsService:
         except ValueError as e:
             # Ambiente de simulação não está em execução
             logger.warning(t("console.interviewApiCallFailed", error=e))
-            result.summary = f"采访失败：{str(e)}。模拟环境可能已关闭，请确保OASIS环境正在运行。"
+            result.summary = t("err.interviewFailed", error=e)
             return result
         except Exception as e:
             logger.error(t("console.interviewApiCallException", error=e))
             import traceback
             logger.error(traceback.format_exc())
-            result.summary = f"采访过程发生错误：{str(e)}"
+            result.summary = t("err.interviewError", error=e)
             return result
         
         # Step 6: gera o resumo da entrevista
@@ -1571,8 +1587,9 @@ class ZepToolsService:
         try:
             response = self.llm.chat_json(
                 messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "system", "content": f"{system_prompt}\n\n{get_json_language_instruction()}"},
+                    # Repete a regra de idioma no fim: modelos locais seguem o idioma do contexto
+                    {"role": "user", "content": f"{user_prompt}\n\n{get_json_language_instruction()}"}
                 ],
                 temperature=0.3
             )
@@ -1630,20 +1647,21 @@ class ZepToolsService:
         try:
             response = self.llm.chat_json(
                 messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "system", "content": f"{system_prompt}\n\n{get_json_language_instruction()}"},
+                    # Repete a regra de idioma no fim: modelos locais seguem o idioma do contexto
+                    {"role": "user", "content": f"{user_prompt}\n\n{get_json_language_instruction()}"}
                 ],
                 temperature=0.5
             )
             
-            return response.get("questions", [f"关于{interview_requirement}，您有什么看法？"])
+            return response.get("questions", [t("err.interviewFallbackQ1", topic=interview_requirement)])
             
         except Exception as e:
             logger.warning(t("console.generateInterviewQuestionsFailed", error=e))
             return [
-                f"关于{interview_requirement}，您的观点是什么？",
-                "这件事对您或您所代表的群体有什么影响？",
-                "您认为应该如何解决或改进这个问题？"
+                t("err.interviewFallbackQ2", topic=interview_requirement),
+                t("err.interviewFallbackQ3"),
+                t("err.interviewFallbackQ4"),
             ]
     
     def _generate_interview_summary(
@@ -1654,7 +1672,7 @@ class ZepToolsService:
         """生成采访摘要"""
         
         if not interviews:
-            return "未完成任何采访"
+            return t("err.interviewNone")
         
         # Coleta todo o conteúdo das entrevistas
         interview_texts = []
@@ -1688,8 +1706,9 @@ class ZepToolsService:
         try:
             summary = self.llm.chat(
                 messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "system", "content": f"{system_prompt}\n\n{get_language_instruction()}"},
+                    # Repete a regra de idioma no fim: modelos locais seguem o idioma do contexto
+                    {"role": "user", "content": f"{user_prompt}\n\n{get_language_instruction()}"}
                 ],
                 temperature=0.3,
                 max_tokens=800
