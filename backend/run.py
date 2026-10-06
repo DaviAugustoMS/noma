@@ -35,6 +35,14 @@ def main():
     
     # 创建应用
     app = create_app()
+
+    # Relatórios que estavam sendo gerados quando o processo anterior terminou ficariam
+    # "gerando" para sempre; só o processo do servidor deve fazer essa limpeza (não os testes).
+    from app.services.report_agent import ReportManager
+    try:
+        ReportManager.mark_interrupted_reports()
+    except Exception as e:
+        print(f"Aviso: não foi possível verificar relatórios interrompidos: {e}")
     
     # 获取运行配置
     host = os.environ.get('FLASK_HOST', '127.0.0.1')

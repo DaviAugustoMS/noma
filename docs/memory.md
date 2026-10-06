@@ -35,6 +35,8 @@ Clone local de `666ghj/MiroFish` v0.1.0 (commit `7657031`, 1 commit no históric
 
 - Marca: o produto agora se chama **Noma** na interface (Home, cabeçalhos, título da aba, textos en/pt/zh, `meta.title`), com logo "N" em `frontend/src/assets/logo/noma-mark.svg` e favicon `frontend/public/favicon.svg`. Internamente (loggers, `/health`, pacotes, pasta) o nome MiroFish permanece. Repositório: `github.com/DaviAugustoMS/noma`. Código derivado do MiroFish (AGPL-3.0): manter `LICENSE` e crédito ao projeto original.
 
+- Relatórios órfãos: a geração roda em thread do backend; ao reiniciar, `ReportManager.mark_interrupted_reports()` (chamado em `run.py`, nunca em `create_app`/testes) marca como `failed` os que estavam pending/planning/generating, preservando as seções escritas. `ReportView` mostra aviso e botão "Gerar novamente" (`force_regenerate`).
+
 ## Forbidden Patterns
 
 - Commitar `.env` (ignorado). Não ler/expor conteúdo de `.env` e `.env.openai.bak`.

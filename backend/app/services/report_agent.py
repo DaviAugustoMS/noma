@@ -2275,6 +2275,69 @@ class ReportManager:
         with open(cls._get_progress_path(report_id), 'w', encoding='utf-8') as f:
             json.dump(progress_data, f, ensure_ascii=False, indent=2)
     
+    INTERRUPTED_MESSAGE = (
+        "Generation interrupted (the backend was restarted or stopped). "
+        "Generate the report again to continue."
+    )
+
+    @classmethod
+    def mark_interrupted_reports(cls) -> List[str]:
+        """
+        Marca como FAILED os relatórios que ficaram em pending/planning/generating.
+
+        A geração roda em uma thread do processo do backend. Quando o processo
+        reinicia, essas threads deixam de existir, mas os arquivos continuam
+        dizendo "gerando" para sempre e a interface fica girando sem fim.
+        Deve ser chamada uma única vez, na inicialização do servidor.
+        Retorna os IDs afetados. Seções já escritas são preservadas.
+        """
+        active = {"pending", "planning", "generating"}
+        interrupted: List[str] = []
+
+        try:
+            names = os.listdir(cls.REPORTS_DIR)
+        except FileNotFoundError:
+            return interrupted
+
+        def read_json(path: str) -> Optional[Dict[str, Any]]:
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except (FileNotFoundError, ValueError):
+                return None
+
+        for report_id in names:
+            meta_path = cls._get_report_path(report_id)
+            progress_path = cls._get_progress_path(report_id)
+            meta = read_json(meta_path)
+            progress = read_json(progress_path)
+            if meta is None and progress is None:
+                continue
+
+            # o progresso é a fonte mais recente; sem ele vale o status do meta
+            current = (progress or {}).get("status") or (meta or {}).get("status")
+            if current not in active:
+                continue
+
+            try:
+                if meta is not None:
+                    meta["status"] = ReportStatus.FAILED.value
+                    meta["error"] = cls.INTERRUPTED_MESSAGE
+                    with open(meta_path, "w", encoding="utf-8") as f:
+                        json.dump(meta, f, ensure_ascii=False, indent=2)
+                if progress is not None:
+                    progress["status"] = ReportStatus.FAILED.value
+                    progress["message"] = cls.INTERRUPTED_MESSAGE
+                    progress["updated_at"] = datetime.now().isoformat()
+                    with open(progress_path, "w", encoding="utf-8") as f:
+                        json.dump(progress, f, ensure_ascii=False, indent=2)
+                interrupted.append(report_id)
+                logger.warning(f"Relatório {report_id} estava '{current}' sem processo ativo; marcado como interrompido")
+            except Exception as e:
+                logger.error(f"Falha ao marcar relatório {report_id} como interrompido: {e}")
+
+        return interrupted
+
     @classmethod
     def get_progress(cls, report_id: str) -> Optional[Dict[str, Any]]:
         """获取报告生成进度"""
