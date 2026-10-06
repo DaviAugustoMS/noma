@@ -59,7 +59,8 @@ class OrbitHttp:
         self._client = client or httpx.Client(timeout=_TIMEOUT)
         self._email = email
         self._password = password
-        self._token: str | None = token or None
+        # Com usuário de serviço, o token estático é ignorado (não renova).
+        self._token: str | None = None if (email and password) else (token or None)
         self._refresh_token: str | None = None
         self._clock = clock
         self._login_blocked_until = 0.0
