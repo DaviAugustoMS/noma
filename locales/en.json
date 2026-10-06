@@ -93,6 +93,9 @@
       "retry": "Resume from where it stopped",
       "backHome": "Back to home",
       "noPendingFiles": "The uploaded files were lost after the page reload. Go back and upload again.",
+      "reportFailed": "This report stopped before finishing. Sections already written are kept.",
+      "regenerate": "Generate again",
+      "regenerating": "Starting…",
       "resuming": "Resuming from saved progress…"
     }
   },

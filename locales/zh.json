@@ -93,6 +93,9 @@
       "retry": "从中断处继续",
       "backHome": "返回首页",
       "noPendingFiles": "页面刷新后上传的文件已丢失，请返回首页重新上传。",
+      "reportFailed": "此报告在完成前中断。已写好的章节已保留。",
+      "regenerate": "重新生成",
+      "regenerating": "正在启动…",
       "resuming": "正在从已保存的进度继续…"
     }
   },

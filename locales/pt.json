@@ -93,6 +93,9 @@
       "retry": "Continuar de onde parou",
       "backHome": "Voltar ao início",
       "noPendingFiles": "Os arquivos enviados foram perdidos ao recarregar a página. Volte e envie novamente.",
+      "reportFailed": "Este relatório parou antes de terminar. As seções já escritas foram mantidas.",
+      "regenerate": "Gerar novamente",
+      "regenerating": "Iniciando…",
       "resuming": "Retomando a partir do progresso salvo…"
     }
   },

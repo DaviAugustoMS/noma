@@ -37,6 +37,19 @@
       </div>
     </header>
 
+    <!-- Relatório interrompido (ex.: backend reiniciado durante a geração) -->
+    <div v-if="reportFailed" class="resume-banner" role="alert">
+      <div class="resume-text">
+        <strong>{{ $t('main.resume.reportFailed') }}</strong>
+        <span v-if="reportErrorDetail" class="resume-detail">{{ reportErrorDetail }}</span>
+      </div>
+      <div class="resume-actions">
+        <button class="resume-btn primary" :disabled="regenerating" @click="regenerateReport">
+          {{ regenerating ? $t('main.resume.regenerating') : $t('main.resume.regenerate') }}
+        </button>
+      </div>
+    </div>
+
     <!-- Main Content Area -->
     <main class="content-area">
       <!-- Left Panel: Graph -->
@@ -73,7 +86,7 @@ import GraphPanel from '../components/GraphPanel.vue'
 import Step4Report from '../components/Step4Report.vue'
 import { getProject, getGraphData } from '../api/graph'
 import { getSimulation } from '../api/simulation'
-import { getReport } from '../api/report'
+import { getReport, generateReport } from '../api/report'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import PipelineRail from '../components/PipelineRail.vue'
 
@@ -97,6 +110,9 @@ const graphData = ref(null)
 const graphLoading = ref(false)
 const systemLogs = ref([])
 const currentStatus = ref('processing') // processing | completed | error
+const reportFailed = ref(false)
+const reportErrorDetail = ref('')
+const regenerating = ref(false)
 
 // --- Computed Layout Styles ---
 const leftPanelStyle = computed(() => {
@@ -155,6 +171,11 @@ const loadReportData = async () => {
       const reportData = reportRes.data
       simulationId.value = reportData.simulation_id
 
+      if (reportData.status === 'failed') {
+        reportFailed.value = true
+        updateStatus('error')
+      }
+
       if (simulationId.value) {
         // 获取 simulation 信息
         const simRes = await getSimulation(simulationId.value)
@@ -182,6 +203,23 @@ const loadReportData = async () => {
   } catch (err) {
     addLog(t('log.loadException', { error: err.message }))
   }
+}
+
+// Gera de novo (no idioma atualmente selecionado) e abre o novo relatório
+const regenerateReport = async () => {
+  if (!simulationId.value || regenerating.value) return
+  regenerating.value = true
+  try {
+    const res = await generateReport({ simulation_id: simulationId.value, force_regenerate: true })
+    if (res.success && res.data?.report_id) {
+      window.location.assign(`/report/${res.data.report_id}`)
+      return
+    }
+    reportErrorDetail.value = res.error || ''
+  } catch (err) {
+    reportErrorDetail.value = err.message
+  }
+  regenerating.value = false
 }
 
 const loadGraph = async (graphId) => {
@@ -353,4 +391,37 @@ onMounted(() => {
 .panel-wrapper.left {
   border-right: 1px solid #EAEAEA;
 }
+
+/* Banner de relatório interrompido */
+.resume-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 14px 12px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 107, 129, 0.45);
+  background: rgba(60, 14, 24, 0.55);
+  backdrop-filter: blur(14px);
+  color: #ffd2d9;
+  font-size: 13px;
+}
+
+.resume-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.resume-detail { color: #ffb4c0; opacity: 0.85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resume-actions { display: flex; gap: 8px; flex: none; }
+
+.resume-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resume-btn.primary { border-color: transparent; color: #02221c; background: linear-gradient(110deg, #19e3c4, #3cc8ff); }
+.resume-btn:disabled { opacity: 0.6; cursor: wait; }
 </style>
