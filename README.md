@@ -76,6 +76,7 @@ Opcionais:
 | `LLM_SIM_BASE_URL`, `LLM_SIM_MODEL_NAME`, `LLM_SIM_API_KEY` | Modelo dedicado às **ações dos agentes na simulação** (por exemplo, um modelo local), mantendo o LLM geral para ontologia, perfis, configuração e relatório. Ativo quando `LLM_SIM_MODEL_NAME` está definido. |
 | `LLM_REASONING_EFFORT`, `LLM_SIM_REASONING_EFFORT` | `none`, `minimal`, `low`, `medium` ou `high`. Com modelos locais que "pensam" (raciocínio oculto), `none` reduz muito o tempo por chamada. |
 | `LLM_BOOST_*` | Segundo provedor usado pelo Reddit na simulação paralela. |
+| `GRAPH_BACKEND` | Provedor do grafo de conhecimento. Hoje só `zep` (padrão). A camada está isolada em `backend/app/services/graph_backend`, o que permite adicionar outro provedor sem tocar nos serviços. |
 | `FLASK_HOST`, `FLASK_PORT` | Endereço e porta do backend (padrão `127.0.0.1:5001`). |
 
 ### Usando um modelo local (exemplo com Ollama)
