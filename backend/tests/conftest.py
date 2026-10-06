@@ -15,3 +15,27 @@ _LLM_TUNING_VARS = (
 def _isolate_llm_tuning_env(monkeypatch):
     for name in _LLM_TUNING_VARS:
         monkeypatch.delenv(name, raising=False)
+
+
+# O .env do desenvolvedor pode ter credenciais reais do Orbit. Sem isto, qualquer
+# teste que cria uma tarefa (TaskManager) gravaria no Orbit de verdade. Cada teste
+# começa com o espelho desligado; os testes do state_store ligam o que precisam.
+_ORBIT_CONFIG_ATTRS = (
+    "ORBIT_BASE_URL",
+    "ORBIT_API_TOKEN",
+    "ORBIT_SERVICE_EMAIL",
+    "ORBIT_SERVICE_PASSWORD",
+)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_orbit_state_store(monkeypatch):
+    from app.config import Config
+    from app.services import state_store
+    from app.services.state_store.null import NullStateStore
+
+    for name in _ORBIT_CONFIG_ATTRS:
+        monkeypatch.setattr(Config, name, "")
+    state_store.reset_state_store(NullStateStore())
+    yield
+    state_store.reset_state_store(None)
