@@ -266,6 +266,15 @@ def test_credentials_and_tokens_never_leak(orbit):
         assert secret not in repr(orbit.http)
 
 
+def test_service_login_wins_over_a_legacy_token():
+    fake = FakeOrbit()
+    store = OrbitStateStore(_http(fake, token=LEGACY_TOKEN))  # credentials + legacy token
+    store.save_task(_task())
+
+    assert fake.logins == 1
+    assert fake.data_requests()[0].headers["Authorization"] == "Bearer access-1"
+
+
 def test_static_token_mode_works_but_cannot_be_renewed():
     fake = FakeOrbit()
     store = OrbitStateStore(
