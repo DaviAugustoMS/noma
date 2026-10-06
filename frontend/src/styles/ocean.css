@@ -221,7 +221,8 @@ body {
 
 /* seletor de idioma no header escuro */
 #app .main-view .language-switcher .switcher-trigger,
-#app .home-shell .language-switcher .switcher-trigger {
+#app .home-shell .language-switcher .switcher-trigger,
+#app .auth-shell .language-switcher .switcher-trigger {
   color: var(--ink);
   background: rgba(2, 11, 20, 0.45);
   border: 1px solid var(--glass-line);
@@ -230,13 +231,15 @@ body {
 }
 
 #app .main-view .language-switcher .switcher-trigger:hover,
-#app .home-shell .language-switcher .switcher-trigger:hover {
+#app .home-shell .language-switcher .switcher-trigger:hover,
+#app .auth-shell .language-switcher .switcher-trigger:hover {
   border-color: var(--glass-line-strong);
   box-shadow: var(--glow-teal);
 }
 
 #app .main-view .language-switcher .switcher-dropdown,
-#app .home-shell .language-switcher .switcher-dropdown {
+#app .home-shell .language-switcher .switcher-dropdown,
+#app .auth-shell .language-switcher .switcher-dropdown {
   background: var(--glass-strong);
   border: 1px solid var(--glass-line);
   border-radius: 12px;
@@ -247,18 +250,21 @@ body {
 }
 
 #app .main-view .language-switcher .switcher-option,
-#app .home-shell .language-switcher .switcher-option {
+#app .home-shell .language-switcher .switcher-option,
+#app .auth-shell .language-switcher .switcher-option {
   color: var(--ink-soft);
 }
 
 #app .main-view .language-switcher .switcher-option:hover,
-#app .home-shell .language-switcher .switcher-option:hover {
+#app .home-shell .language-switcher .switcher-option:hover,
+#app .auth-shell .language-switcher .switcher-option:hover {
   background: rgba(25, 227, 196, 0.12);
   color: var(--ink);
 }
 
 #app .main-view .language-switcher .switcher-option.active,
-#app .home-shell .language-switcher .switcher-option.active {
+#app .home-shell .language-switcher .switcher-option.active,
+#app .auth-shell .language-switcher .switcher-option.active {
   color: var(--bio-teal);
 }
 

@@ -32,6 +32,41 @@
   "nav": {
     "visitGithub": "Visit our Github page"
   },
+  "auth": {
+    "tabs": { "login": "Sign in", "register": "Sign up" },
+    "title": { "login": "Sign in to Noma", "register": "Create your account" },
+    "subtitle": {
+      "login": "Use the email and password you registered.",
+      "register": "Takes under a minute. You are signed in automatically."
+    },
+    "fields": {
+      "name": "Name (optional)",
+      "email": "Email",
+      "password": "Password",
+      "confirm": "Confirm password"
+    },
+    "submit": { "login": "Sign in", "register": "Create account" },
+    "loading": "Please wait...",
+    "switch": {
+      "toRegister": "No account yet? Sign up",
+      "toLogin": "Already have an account? Sign in"
+    },
+    "createdNoLogin": "Account created, but automatic sign-in failed. Use the Sign in tab.",
+    "logout": "Sign out",
+    "errors": {
+      "emailRequired": "Enter your email.",
+      "emailInvalid": "Invalid email.",
+      "passwordRequired": "Enter your password.",
+      "passwordShort": "The password must have at least {min} characters.",
+      "passwordMismatch": "The passwords do not match.",
+      "invalidCredentials": "Wrong email or password.",
+      "emailTaken": "This email is already registered. Use the Sign in tab.",
+      "invalid": "Invalid data. Check the email and password.",
+      "rateLimited": "Too many attempts. Wait a moment and try again.",
+      "network": "Could not reach the sign-in server. Check your connection.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  },
   "home": {
     "tagline": "Concise & Universal Swarm Intelligence Engine",
     "version": "/ v0.1-Preview",

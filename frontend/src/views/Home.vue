@@ -16,6 +16,7 @@
           <span class="health-dot"></span>
           <span class="health-text">{{ healthMessage }}</span>
         </div>
+        <UserMenu />
         <LanguageSwitcher />
         <a href="https://github.com/DaviAugustoMS/noma" target="_blank" rel="noopener" class="github-link">
           {{ $t('nav.visitGithub') }} <span class="arrow">↗</span>
@@ -240,6 +241,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import UserMenu from '../components/UserMenu.vue'
 import { getSystemCheck } from '../api/system'
 
 const router = useRouter()

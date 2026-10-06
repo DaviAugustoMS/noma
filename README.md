@@ -79,6 +79,25 @@ Opcionais:
 | `GRAPH_BACKEND` | Provedor do grafo de conhecimento. Hoje só `zep` (padrão). A camada está isolada em `backend/app/services/graph_backend`, o que permite adicionar outro provedor sem tocar nos serviços. |
 | `FLASK_HOST`, `FLASK_PORT` | Endereço e porta do backend (padrão `127.0.0.1:5001`). |
 
+### Cadastro e login (front, via Zeep Orbit)
+
+A tela `/auth` tem as abas **Entrar** e **Cadastrar** e fala **direto** com o Orbit (`/{app}/auth/register`, `login`, `refresh`, `me`, `logout`), então a senha não passa pelo backend do Noma. Depois do cadastro a pessoa já entra: o `register` devolve só o token, então o front faz o login em seguida para obter o refresh token.
+
+Variáveis do front (em `frontend/.env`, lidas pelo Vite):
+
+| Variável | Para que serve |
+|---|---|
+| `VITE_ORBIT_URL` | URL da instância (padrão `https://orbit.dlec.app`). |
+| `VITE_ORBIT_APP` | App com login por email ativado (padrão `mirofish`). |
+| `VITE_AUTH_REQUIRED` | `false` desliga a exigência de login (uso local). |
+
+Limites que valem conhecer:
+
+- **É uma tela de entrada, não autorização.** O backend do Noma não valida o token; quem chamar a API diretamente continua passando. Para proteger a API é preciso validar o token no backend (`GET /auth/me`).
+- O `register` do Orbit é público: qualquer pessoa que conheça a URL cria conta. Se for expor o app, restrinja quem pode se cadastrar.
+- A sessão fica em `localStorage`. Se o Orbit estiver fora do ar, a sessão salva continua valendo; só um `401` descarta a sessão.
+- Quem usa o espelho de estado (abaixo) com **token de app** deve saber que, com login por email ativado no mesmo app, o endpoint de renovação do token de app deixou de existir. Para renovar sem surpresas, use um app separado para usuários.
+
 ### Estado durável no Zeep Orbit (opcional)
 
 Espelha **tarefas** e **checkpoints de etapas** (hoje, o build do grafo) em tabelas do Zeep Orbit, para consultar o histórico e saber onde cada execução parou depois de um reinício. Sem as variáveis abaixo nada é gravado fora do disco local.

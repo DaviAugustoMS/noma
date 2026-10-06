@@ -32,6 +32,41 @@
   "nav": {
     "visitGithub": "Visite nossa página no Github"
   },
+  "auth": {
+    "tabs": { "login": "Entrar", "register": "Cadastrar" },
+    "title": { "login": "Acesse o Noma", "register": "Crie sua conta" },
+    "subtitle": {
+      "login": "Entre com o email e a senha cadastrados.",
+      "register": "Leva menos de um minuto. Você entra automaticamente."
+    },
+    "fields": {
+      "name": "Nome (opcional)",
+      "email": "Email",
+      "password": "Senha",
+      "confirm": "Confirmar senha"
+    },
+    "submit": { "login": "Entrar", "register": "Criar conta" },
+    "loading": "Aguarde...",
+    "switch": {
+      "toRegister": "Ainda não tem conta? Cadastre-se",
+      "toLogin": "Já tem conta? Entre"
+    },
+    "createdNoLogin": "Conta criada, mas não foi possível entrar automaticamente. Use a aba Entrar.",
+    "logout": "Sair",
+    "errors": {
+      "emailRequired": "Informe o email.",
+      "emailInvalid": "Email inválido.",
+      "passwordRequired": "Informe a senha.",
+      "passwordShort": "A senha precisa ter pelo menos {min} caracteres.",
+      "passwordMismatch": "As senhas não conferem.",
+      "invalidCredentials": "Email ou senha incorretos.",
+      "emailTaken": "Este email já está cadastrado. Use a aba Entrar.",
+      "invalid": "Dados inválidos. Confira o email e a senha.",
+      "rateLimited": "Muitas tentativas. Aguarde um pouco e tente de novo.",
+      "network": "Não foi possível falar com o servidor de login. Verifique a conexão.",
+      "unknown": "Algo deu errado. Tente novamente."
+    }
+  },
   "home": {
     "tagline": "Motor de Inteligência de Enxame, Simples e Universal",
     "version": "/ v0.1-Preview",

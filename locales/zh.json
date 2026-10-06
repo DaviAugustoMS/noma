@@ -32,6 +32,41 @@
   "nav": {
     "visitGithub": "访问我们的Github主页"
   },
+  "auth": {
+    "tabs": { "login": "登录", "register": "注册" },
+    "title": { "login": "登录 Noma", "register": "创建账号" },
+    "subtitle": {
+      "login": "请输入已注册的邮箱和密码。",
+      "register": "不到一分钟即可完成，注册后自动登录。"
+    },
+    "fields": {
+      "name": "姓名（选填）",
+      "email": "邮箱",
+      "password": "密码",
+      "confirm": "确认密码"
+    },
+    "submit": { "login": "登录", "register": "创建账号" },
+    "loading": "请稍候...",
+    "switch": {
+      "toRegister": "还没有账号？立即注册",
+      "toLogin": "已有账号？去登录"
+    },
+    "createdNoLogin": "账号已创建，但自动登录失败，请切换到“登录”标签。",
+    "logout": "退出登录",
+    "errors": {
+      "emailRequired": "请输入邮箱。",
+      "emailInvalid": "邮箱格式不正确。",
+      "passwordRequired": "请输入密码。",
+      "passwordShort": "密码至少需要 {min} 个字符。",
+      "passwordMismatch": "两次输入的密码不一致。",
+      "invalidCredentials": "邮箱或密码错误。",
+      "emailTaken": "该邮箱已注册，请切换到“登录”标签。",
+      "invalid": "数据无效，请检查邮箱和密码。",
+      "rateLimited": "尝试次数过多，请稍后再试。",
+      "network": "无法连接登录服务器，请检查网络。",
+      "unknown": "出错了，请重试。"
+    }
+  },
   "home": {
     "tagline": "简洁通用的群体智能引擎",
     "version": "/ v0.1-预览版",
