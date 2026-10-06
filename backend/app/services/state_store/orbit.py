@@ -7,8 +7,11 @@ timeout, which could hang a pipeline thread indefinitely.
 Contract (from the app's OpenAPI): paths end with ``/``; lists return
 ``{data, count, limit, offset}``; ``POST`` supports ``on_conflict`` +
 ``conflict_columns`` for a native upsert; filters use ``column=op.value``
-(``eq.``, ``in.`` ...); app tokens expire and are renewed through
-``POST auth/token/refresh``.
+(``eq.``, ``in.`` ...). The app uses email/password login, so the backend
+signs in as a service user (``POST auth/login``) and keeps the session alive
+with ``POST auth/refresh``, falling back to a new login when the refresh token
+is no longer valid. A static token (``ORBIT_API_TOKEN``) is still accepted as
+a legacy fallback, but it cannot be renewed.
 
 Tables (see README): ``tasks`` (unique ``task_id``) and ``steps`` (unique
 ``entity_type, entity_id, step``).
@@ -16,10 +19,10 @@ Tables (see README): ``tasks`` (unique ``task_id``) and ``steps`` (unique
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Iterable
-
 import threading
+import time
+from datetime import datetime, timezone
+from typing import Any, Callable, Iterable
 
 import httpx
 
@@ -27,33 +30,108 @@ from .base import StateStoreError
 
 _TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 _PAGE = 100
+# After a failed login, wait before trying again so a wrong password or a rate
+# limit is not hammered by every queued write.
+_LOGIN_BACKOFF_SECONDS = 60.0
 
 
 class OrbitHttp:
-    """Minimal Orbit table client. The token is never logged or put in errors."""
+    """Minimal Orbit table client. Credentials and tokens are never logged."""
 
     def __init__(
         self,
         base_url: str,
         app: str,
-        token: str,
         *,
+        email: str = "",
+        password: str = "",
+        token: str = "",
         client: httpx.Client | None = None,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
-        if not (base_url and app and token):
-            raise ValueError("ORBIT_BASE_URL, ORBIT_APP and ORBIT_API_TOKEN are required")
+        if not (base_url and app):
+            raise ValueError("ORBIT_BASE_URL and ORBIT_APP are required")
+        if not ((email and password) or token):
+            raise ValueError(
+                "Provide ORBIT_SERVICE_EMAIL and ORBIT_SERVICE_PASSWORD (or ORBIT_API_TOKEN)"
+            )
         self._base = f"{base_url.rstrip('/')}/{app}"
         self._client = client or httpx.Client(timeout=_TIMEOUT)
-        self._token = token
-        self._refresh_lock = threading.Lock()
+        self._email = email
+        self._password = password
+        self._token: str | None = token or None
+        self._refresh_token: str | None = None
+        self._clock = clock
+        self._login_blocked_until = 0.0
+        self._auth_lock = threading.Lock()
 
-    def __repr__(self) -> str:  # never expose the token
+    def __repr__(self) -> str:  # never expose credentials
         return f"OrbitHttp(base={self._base!r})"
 
+    # -- authentication --------------------------------------------------
+    def _auth_post(self, path: str, body: dict[str, str]) -> dict[str, Any] | None:
+        try:
+            response = self._client.post(f"{self._base}/{path}", json=body)
+            if response.status_code == 200:
+                data = response.json()
+                return data if isinstance(data, dict) and data.get("token") else None
+        except (httpx.HTTPError, ValueError):
+            pass
+        return None
+
+    def _apply(self, tokens: dict[str, Any]) -> None:
+        self._token = tokens["token"]
+        self._refresh_token = tokens.get("refresh_token") or self._refresh_token
+
+    def _login(self) -> bool:
+        if not (self._email and self._password):
+            return False
+        if self._clock() < self._login_blocked_until:
+            return False
+        tokens = self._auth_post(
+            "auth/login", {"email": self._email, "password": self._password}
+        )
+        if not tokens:
+            self._login_blocked_until = self._clock() + _LOGIN_BACKOFF_SECONDS
+            return False
+        self._apply(tokens)
+        return True
+
+    def _ensure_token(self) -> str:
+        if self._token:
+            return self._token
+        with self._auth_lock:
+            if not self._token:
+                self._login()
+        if not self._token:
+            raise StateStoreError("Orbit login failed", status=401)
+        return self._token
+
+    def _renew(self, rejected_token: str) -> bool:
+        """Refresh the session, or sign in again. Tokens live in memory only."""
+
+        with self._auth_lock:
+            if self._token != rejected_token:
+                return True  # another thread already renewed it
+            if self._refresh_token:
+                tokens = self._auth_post(
+                    "auth/refresh", {"refresh_token": self._refresh_token}
+                )
+                if tokens:
+                    self._apply(tokens)
+                    return True
+                self._refresh_token = None
+            if self._login():
+                return True
+            if self._email and self._password:
+                self._token = None  # unusable and not renewable until login works
+            return False
+
+    # -- requests ---------------------------------------------------------
     def _send(
         self, method: str, path: str, params: dict[str, str] | None, json: Any
     ) -> tuple[httpx.Response, str]:
-        token = self._token
+        token = self._ensure_token()
         try:
             response = self._client.request(
                 method,
@@ -66,31 +144,12 @@ class OrbitHttp:
             raise StateStoreError(f"Orbit transport error: {type(error).__name__}") from error
         return response, token
 
-    def _refresh(self, rejected_token: str) -> bool:
-        """Reissue the app token once. Kept in memory only (never persisted)."""
-
-        with self._refresh_lock:
-            if self._token != rejected_token:
-                return True  # another thread already renewed it
-            try:
-                response = self._client.post(
-                    f"{self._base}/auth/token/refresh",
-                    headers={"Authorization": f"Bearer {rejected_token}"},
-                )
-                new_token = response.json().get("token") if response.status_code == 200 else None
-            except (httpx.HTTPError, ValueError):
-                return False
-            if not new_token:
-                return False
-            self._token = new_token
-            return True
-
     def _request(
         self, method: str, path: str, *, params: dict[str, str] | None = None,
         json: Any = None,
     ) -> Any:
         response, used_token = self._send(method, path, params, json)
-        if response.status_code == 401 and self._refresh(used_token):
+        if response.status_code == 401 and self._renew(used_token):
             response, _ = self._send(method, path, params, json)
         if response.status_code == 204:
             return None

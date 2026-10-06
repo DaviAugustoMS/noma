@@ -27,7 +27,8 @@ _store: StateStore | None = None
 
 
 def is_state_store_configured() -> bool:
-    return bool(Config.ORBIT_BASE_URL and Config.ORBIT_API_TOKEN)
+    has_login = bool(Config.ORBIT_SERVICE_EMAIL and Config.ORBIT_SERVICE_PASSWORD)
+    return bool(Config.ORBIT_BASE_URL and (has_login or Config.ORBIT_API_TOKEN))
 
 
 def get_state_store() -> StateStore:
@@ -45,7 +46,9 @@ def get_state_store() -> StateStore:
                         OrbitHttp(
                             Config.ORBIT_BASE_URL,
                             Config.ORBIT_APP,
-                            Config.ORBIT_API_TOKEN,
+                            email=Config.ORBIT_SERVICE_EMAIL,
+                            password=Config.ORBIT_SERVICE_PASSWORD,
+                            token=Config.ORBIT_API_TOKEN,
                         )
                     )
                 )

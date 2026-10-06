@@ -35,9 +35,14 @@ class Config:
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
 
     # Espelho durável do estado (tarefas e checkpoints) no Zeep Orbit. Opcional:
-    # sem ORBIT_BASE_URL e ORBIT_API_TOKEN nada é gravado fora do disco local.
+    # sem ORBIT_BASE_URL e credenciais nada é gravado fora do disco local.
     ORBIT_BASE_URL = os.environ.get('ORBIT_BASE_URL', '').strip()
     ORBIT_APP = os.environ.get('ORBIT_APP', 'mirofish').strip()
+    # Usuário de serviço (login por email/senha no app do Orbit). É o modo
+    # recomendado: renova a sessão sozinho. ORBIT_API_TOKEN é só um fallback
+    # legado, que não pode ser renovado.
+    ORBIT_SERVICE_EMAIL = os.environ.get('ORBIT_SERVICE_EMAIL', '').strip()
+    ORBIT_SERVICE_PASSWORD = os.environ.get('ORBIT_SERVICE_PASSWORD', '')
     ORBIT_API_TOKEN = os.environ.get('ORBIT_API_TOKEN', '').strip()
     # Ao subir, tarefas ativas no Orbit sem atualização há mais de N segundos
     # viram "failed (interrupted)". 0 = sempre (um único backend por app).

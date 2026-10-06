@@ -96,27 +96,28 @@ Limites que valem conhecer:
 - **É uma tela de entrada, não autorização.** O backend do Noma não valida o token; quem chamar a API diretamente continua passando. Para proteger a API é preciso validar o token no backend (`GET /auth/me`).
 - O `register` do Orbit é público: qualquer pessoa que conheça a URL cria conta. Se for expor o app, restrinja quem pode se cadastrar.
 - A sessão fica em `localStorage`. Se o Orbit estiver fora do ar, a sessão salva continua valendo; só um `401` descarta a sessão.
-- Quem usa o espelho de estado (abaixo) com **token de app** deve saber que, com login por email ativado no mesmo app, o endpoint de renovação do token de app deixou de existir. Para renovar sem surpresas, use um app separado para usuários.
+- Com o login por email ativado, o app **não emite mais token de app**. O espelho de estado (abaixo) entra com um **usuário de serviço** (email e senha), que renova a sessão sozinho.
 
 ### Estado durável no Zeep Orbit (opcional)
 
-Espelha **tarefas** e **checkpoints de etapas** (hoje, o build do grafo) em tabelas do Zeep Orbit, para consultar o histórico e saber onde cada execução parou depois de um reinício. Sem as variáveis abaixo nada é gravado fora do disco local.
+Espelha **tarefas** e **checkpoints de etapas** (hoje, o build do grafo) em tabelas do Zeep Orbit, para consultar o histórico e saber onde cada execução parou depois de um reinício. Sem a URL e as credenciais abaixo nada é gravado fora do disco local.
 
 | Variável | Para que serve |
 |---|---|
 | `ORBIT_BASE_URL` | URL da instância, **sem** `/{app}` no final (por exemplo, `https://orbit.dlec.app`). |
 | `ORBIT_APP` | Nome do app (padrão `mirofish`). |
-| `ORBIT_API_TOKEN` | Token de API **do app**, emitido no dashboard do Orbit. Não use um PAT pessoal. |
+| `ORBIT_SERVICE_EMAIL`, `ORBIT_SERVICE_PASSWORD` | Usuário de serviço do backend (uma conta criada no app, pela tela `/auth`). **Modo recomendado**: o backend faz login e renova a sessão com o refresh token. |
+| `ORBIT_API_TOKEN` | Fallback legado: um token de app já emitido. **Não é renovável** e, em app com login por email, não dá para emitir outro. Não use um PAT pessoal. |
 | `ORBIT_ORPHAN_GRACE_SECONDS` | Ao subir, tarefas ativas no Orbit sem atualização há mais de N segundos viram `failed (interrupted)`. `0` (padrão) assume um único backend por app. |
 
 Como funciona:
 
 - O disco e a memória continuam sendo a fonte para as decisões do app. O Orbit é um **espelho**: as gravações são assíncronas, com repetição e descarte em caso de falha, então uma indisponibilidade do Orbit nunca interrompe um build.
 - O `TaskManager` copia cada mudança de tarefa. O build do grafo grava os checkpoints `chunked → graph_created → ontology_set → ingestion_submitted → ingestion_complete → graph_fetched → completed` (ou `failed`), com IDs e contagens, **sem conteúdo dos documentos**.
-- O token do app **expira**. Ao receber `401`, o cliente chama `POST /{app}/auth/token/refresh` uma vez e segue com o token renovado **só em memória** (não é gravado em lugar nenhum). Se o token já estiver expirado de vez ao subir o backend, emita outro no dashboard e atualize o `.env`; enquanto isso as gravações são descartadas com aviso no log e o app continua funcionando.
+- A sessão do usuário de serviço fica só em memória. Ao receber `401`, o cliente renova com `POST /{app}/auth/refresh` e, se o refresh token também não valer mais, faz um novo login. Se o login falhar (senha errada, Orbit fora do ar), ele espera 60 s antes de tentar de novo e as gravações são descartadas com aviso no log, sem afetar o app.
 - As tarefas **não** são recarregadas do Orbit para a memória: uma tarefa `processing` restaurada pareceria um build ativo e atrapalharia a retomada existente.
 
-Tabelas do app (RLS desligada; o acesso é pelo token do app):
+Tabelas do app (RLS desligada por enquanto, então qualquer usuário autenticado do app lê e grava; veja os limites acima):
 
 - `tasks`: `task_id` (único), `task_type`, `status`, `progress`, `message`, `result`, `error`, `metadata`, `progress_detail` (jsonb), `project_id`, `task_created_at`, `task_updated_at`.
 - `steps`: `entity_type`, `entity_id`, `step`, `status`, `seq`, `payload` (jsonb), `error`, `started_at`, `finished_at`, com índice único em `(entity_type, entity_id, step)`.
