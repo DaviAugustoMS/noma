@@ -275,7 +275,7 @@ class SimulationManager:
         """
         state = self._load_simulation_state(simulation_id)
         if not state:
-            raise ValueError(f"模拟不存在: {simulation_id}")
+            raise ValueError(t('err.simNotFound', id=simulation_id))
         
         try:
             state.status = SimulationStatus.PREPARING
@@ -315,7 +315,7 @@ class SimulationManager:
             
             if filtered.filtered_count == 0:
                 state.status = SimulationStatus.FAILED
-                state.error = "没有找到符合条件的实体，请检查图谱是否正确构建"
+                state.error = t('err.noMatchingEntities')
                 self._save_simulation_state(state)
                 raise ValueError(state.error)
             
@@ -503,13 +503,13 @@ class SimulationManager:
         """获取模拟的Agent Profile"""
         state = self._load_simulation_state(simulation_id)
         if not state:
-            raise ValueError(f"模拟不存在: {simulation_id}")
+            raise ValueError(t('err.simNotFound', id=simulation_id))
 
         if platform is None:
             platform = state.get_default_platform()
 
         if platform not in {"twitter", "reddit"}:
-            raise ValueError(f"不支持的平台: {platform}")
+            raise ValueError(t('err.unsupportedPlatform', platform=platform))
 
         sim_dir = self._get_simulation_dir(simulation_id)
         profile_path = os.path.join(

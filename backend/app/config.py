@@ -76,14 +76,14 @@ class Config:
         """验证必要配置"""
         errors: list[str] = []
         if not cls.LLM_API_KEY:
-            errors.append("LLM_API_KEY 未配置")
+            errors.append("LLM_API_KEY não configurada")
         graph_backend = (cls.GRAPH_BACKEND or "zep").strip().lower()
         if graph_backend != "zep":
-            errors.append(f"GRAPH_BACKEND {graph_backend!r} 不受支持；可选值: zep")
+            errors.append(f"GRAPH_BACKEND {graph_backend!r} não é suportado; valores aceitos: zep")
         elif not cls.ZEP_API_KEY:
-            errors.append("ZEP_API_KEY 未配置")
+            errors.append("ZEP_API_KEY não configurada")
         if os.environ.get("ZEP_API_URL"):
-            errors.append("ZEP_API_URL 不受支持；MiroFish 仅连接 Zep Cloud")
+            errors.append("ZEP_API_URL não é suportada; o MiroFish só conecta ao Zep Cloud")
         if cls.DEBUG:
             import warnings
             warnings.warn("Flask DEBUG mode is enabled. Do not use in production.", RuntimeWarning)

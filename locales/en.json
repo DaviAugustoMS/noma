@@ -234,6 +234,7 @@
     "generating": "Generating"
   },
   "step3": {
+    "startFailedShort": "Failed to start",
     "startGenerateReport": "Generate Report",
     "generatingReport": "Starting...",
     "waitingForActions": "Waiting for agent actions...",
@@ -360,6 +361,10 @@
     "world2": "World 2"
   },
   "step5": {
+    "chatRoleUser": "Interviewer",
+    "chatRoleAgent": "You",
+    "chatHistoryIntro": "Here is our conversation so far:",
+    "chatNewQuestion": "My new question now is: {message}",
     "interactiveTools": "Interactive Tools",
     "agentsAvailable": "{count} agents available",
     "chatWithReportAgent": "Chat with Report Agent",
@@ -427,6 +432,31 @@
     "roundsProgress": "{current}/{total} rounds",
     "untitledSimulation": "Untitled simulation",
     "unknownFile": "Unknown file"
+  },
+  "err": {
+    "simNotFound": "Simulation not found: {id}",
+    "simConfigMissingPrepare": "Simulation config not found; call /prepare first.",
+    "simAlreadyRunning": "The simulation is already running or being finalized: {id}",
+    "graphIdRequiredForMemory": "graph_id is required to enable graph memory updates.",
+    "graphUpdaterInitFailed": "Failed to initialize the Zep graph updater: {error}",
+    "scriptNotFound": "Script not found: {path}",
+    "zepWriteIncomplete": "The Zep graph write did not complete fully: {error}",
+    "envNotRunningInterview": "The simulation environment is not running or was closed; cannot run the interview: {id}",
+    "simConfigNotFound": "Simulation config not found: {id}",
+    "simNoAgents": "The simulation config has no agents: {id}",
+    "updatersNotStopped": "Some graph updaters did not stop completely: {details}",
+    "fileNotFound": "File not found: {path}",
+    "unsupportedFormat": "Unsupported file format: {suffix}",
+    "unprocessableFormat": "Cannot process file format: {suffix}",
+    "needPyMuPDF": "PyMuPDF must be installed: pip install PyMuPDF",
+    "llmKeyMissing": "LLM_API_KEY is not configured",
+    "zepKeyMissing": "ZEP_API_KEY is not configured",
+    "ipcTimeout": "Timed out waiting for the command response ({timeout}s)",
+    "noMatchingEntities": "No matching entities found; check that the graph was built correctly.",
+    "unsupportedPlatform": "Unsupported platform: {platform}",
+    "simDirMissingNoClean": "The simulation directory does not exist; nothing to clean.",
+    "envAlreadyClosed": "The environment is already closed.",
+    "envCloseSent": "Environment close command sent."
   },
   "api": {
     "projectNotFound": "Project not found: {id}",

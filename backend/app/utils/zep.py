@@ -13,6 +13,7 @@ from zep_cloud.core.api_error import ApiError as ZepApiError
 
 from ..config import Config
 from .logger import get_logger
+from .locale import t
 
 logger = get_logger("mirofish.zep")
 
@@ -73,7 +74,7 @@ def get_zep_client(api_key: str | None = None, timeout: float | None = None) -> 
 
     normalized_key = (api_key or Config.ZEP_API_KEY or "").strip()
     if not normalized_key:
-        raise ValueError("ZEP_API_KEY 未配置")
+        raise ValueError(t('err.zepKeyMissing'))
 
     request_timeout = float(
         timeout if timeout is not None else ZEP_HTTP_REQUEST_TIMEOUT_SECONDS

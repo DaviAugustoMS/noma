@@ -234,6 +234,7 @@
     "generating": "生成中"
   },
   "step3": {
+    "startFailedShort": "启动失败",
     "startGenerateReport": "开始生成结果报告",
     "generatingReport": "启动中...",
     "waitingForActions": "Waiting for agent actions...",
@@ -360,6 +361,10 @@
     "world2": "世界2"
   },
   "step5": {
+    "chatRoleUser": "提问者",
+    "chatRoleAgent": "你",
+    "chatHistoryIntro": "以下是我们之前的对话：",
+    "chatNewQuestion": "现在我的新问题是：{message}",
     "interactiveTools": "Interactive Tools",
     "agentsAvailable": "{count} agents available",
     "chatWithReportAgent": "与Report Agent对话",
@@ -427,6 +432,31 @@
     "roundsProgress": "{current}/{total} 轮",
     "untitledSimulation": "未命名模拟",
     "unknownFile": "未知文件"
+  },
+  "err": {
+    "simNotFound": "模拟不存在: {id}",
+    "simConfigMissingPrepare": "模拟配置不存在，请先调用 /prepare 接口",
+    "simAlreadyRunning": "模拟已在运行或结束处理中: {id}",
+    "graphIdRequiredForMemory": "启用图谱记忆更新时必须提供 graph_id",
+    "graphUpdaterInitFailed": "Zep图谱更新器初始化失败: {error}",
+    "scriptNotFound": "脚本不存在: {path}",
+    "zepWriteIncomplete": "Zep图谱写入未完整完成: {error}",
+    "envNotRunningInterview": "模拟环境未运行或已关闭，无法执行Interview: {id}",
+    "simConfigNotFound": "模拟配置不存在: {id}",
+    "simNoAgents": "模拟配置中没有Agent: {id}",
+    "updatersNotStopped": "部分图谱更新器未完整停止: {details}",
+    "fileNotFound": "文件不存在: {path}",
+    "unsupportedFormat": "不支持的文件格式: {suffix}",
+    "unprocessableFormat": "无法处理的文件格式: {suffix}",
+    "needPyMuPDF": "需要安装PyMuPDF: pip install PyMuPDF",
+    "llmKeyMissing": "LLM_API_KEY 未配置",
+    "zepKeyMissing": "ZEP_API_KEY 未配置",
+    "ipcTimeout": "等待命令响应超时 ({timeout}秒)",
+    "noMatchingEntities": "没有找到符合条件的实体，请检查图谱是否正确构建",
+    "unsupportedPlatform": "不支持的平台: {platform}",
+    "simDirMissingNoClean": "模拟目录不存在，无需清理",
+    "envAlreadyClosed": "环境已经关闭",
+    "envCloseSent": "环境关闭命令已发送"
   },
   "api": {
     "projectNotFound": "项目不存在: {id}",

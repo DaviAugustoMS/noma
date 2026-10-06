@@ -10,6 +10,7 @@ from typing import Optional, Dict, Any, List
 from openai import OpenAI
 
 from ..config import Config
+from .locale import t
 from .openai_chat_compat import create_chat_completion, extract_chat_completion_text
 
 
@@ -102,7 +103,7 @@ class LLMClient:
         self.model = model or Config.LLM_MODEL_NAME
         
         if not self.api_key:
-            raise ValueError("LLM_API_KEY 未配置")
+            raise ValueError(t('err.llmKeyMissing'))
         
         self.client = OpenAI(
             api_key=self.api_key,

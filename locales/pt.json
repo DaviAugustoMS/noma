@@ -234,6 +234,7 @@
     "generating": "Gerando"
   },
   "step3": {
+    "startFailedShort": "Falha ao iniciar",
     "startGenerateReport": "Gerar Relatório",
     "generatingReport": "Iniciando...",
     "waitingForActions": "Aguardando ações dos agentes...",
@@ -360,6 +361,10 @@
     "world2": "Mundo 2"
   },
   "step5": {
+    "chatRoleUser": "Entrevistador",
+    "chatRoleAgent": "Você",
+    "chatHistoryIntro": "Esta é a nossa conversa até agora:",
+    "chatNewQuestion": "Agora minha nova pergunta é: {message}",
     "interactiveTools": "Ferramentas Interativas",
     "agentsAvailable": "{count} agentes disponíveis",
     "chatWithReportAgent": "Conversar com o Report Agent",
@@ -427,6 +432,31 @@
     "roundsProgress": "{current}/{total} rodadas",
     "untitledSimulation": "Simulação sem título",
     "unknownFile": "Arquivo desconhecido"
+  },
+  "err": {
+    "simNotFound": "Simulação não encontrada: {id}",
+    "simConfigMissingPrepare": "Configuração da simulação não encontrada; chame /prepare antes.",
+    "simAlreadyRunning": "A simulação já está em execução ou sendo finalizada: {id}",
+    "graphIdRequiredForMemory": "É obrigatório informar graph_id para ativar a atualização de memória do grafo.",
+    "graphUpdaterInitFailed": "Falha ao inicializar o atualizador do grafo Zep: {error}",
+    "scriptNotFound": "Script não encontrado: {path}",
+    "zepWriteIncomplete": "A gravação no grafo Zep não foi concluída por completo: {error}",
+    "envNotRunningInterview": "O ambiente da simulação não está em execução ou foi encerrado; não é possível fazer a entrevista: {id}",
+    "simConfigNotFound": "Configuração da simulação não encontrada: {id}",
+    "simNoAgents": "A configuração da simulação não tem agentes: {id}",
+    "updatersNotStopped": "Alguns atualizadores do grafo não pararam por completo: {details}",
+    "fileNotFound": "Arquivo não encontrado: {path}",
+    "unsupportedFormat": "Formato de arquivo não suportado: {suffix}",
+    "unprocessableFormat": "Não foi possível processar o formato de arquivo: {suffix}",
+    "needPyMuPDF": "É necessário instalar o PyMuPDF: pip install PyMuPDF",
+    "llmKeyMissing": "LLM_API_KEY não configurada",
+    "zepKeyMissing": "ZEP_API_KEY não configurada",
+    "ipcTimeout": "Tempo esgotado aguardando a resposta do comando ({timeout}s)",
+    "noMatchingEntities": "Nenhuma entidade correspondente encontrada; verifique se o grafo foi construído corretamente.",
+    "unsupportedPlatform": "Plataforma não suportada: {platform}",
+    "simDirMissingNoClean": "O diretório da simulação não existe; nada a limpar.",
+    "envAlreadyClosed": "O ambiente já está encerrado.",
+    "envCloseSent": "Comando de encerramento do ambiente enviado."
   },
   "api": {
     "projectNotFound": "Projeto não encontrado: {id}",

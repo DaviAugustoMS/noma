@@ -18,8 +18,8 @@ def test_instruction_is_explicit_and_in_the_selected_language(code, marker):
     assert len(text) > 60  # instrução completa, não só "responda em X"
 
 
-def test_chinese_stays_default_and_unknown_locale_falls_back():
+def test_portuguese_is_the_default_and_unknown_locale_falls_back_to_it():
     locale_utils.set_locale("zh")
-    assert "中文" in locale_utils.get_language_instruction()
+    assert "中文" in locale_utils.get_language_instruction()  # zh continua disponível
     locale_utils.set_locale("xx")
-    assert locale_utils.get_language_instruction()  # não quebra com locale desconhecido
+    assert "português" in locale_utils.get_language_instruction()  # desconhecido -> padrão

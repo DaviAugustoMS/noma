@@ -12,7 +12,7 @@ from queue import Queue, Empty
 
 from ..config import Config
 from ..utils.logger import get_logger
-from ..utils.locale import get_locale, set_locale
+from ..utils.locale import get_locale, set_locale, t
 from ..utils.zep import ZEP_INGESTION_WAIT_TIMEOUT_SECONDS
 from .graph_backend import GraphBackend, get_graph_backend
 
@@ -403,7 +403,7 @@ class ZepGraphMemoryUpdater:
         
         self.add_activity(activity)
     
-    def _worker_loop(self, locale: str = 'zh'):
+    def _worker_loop(self, locale: str = 'pt'):
         """后台工作循环 - 按平台批量发送活动到Zep"""
         set_locale(locale)
         while self._running or not self._activity_queue.empty():
@@ -764,7 +764,7 @@ class ZepGraphMemoryManager:
                 f"{simulation_id}: {error}"
                 for simulation_id, error in errors
             )
-            raise RuntimeError(f"部分图谱更新器未完整停止: {details}")
+            raise RuntimeError(t('err.updatersNotStopped', details=details))
         logger.info("已停止所有图谱记忆更新器")
     
     @classmethod
