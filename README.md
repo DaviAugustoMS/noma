@@ -79,6 +79,20 @@ Opcionais:
 | `GRAPH_BACKEND` | Provedor do grafo de conhecimento. Hoje só `zep` (padrão). A camada está isolada em `backend/app/services/graph_backend`, o que permite adicionar outro provedor sem tocar nos serviços. |
 | `FLASK_HOST`, `FLASK_PORT` | Endereço e porta do backend (padrão `127.0.0.1:5001`). |
 
+### Idioma do app e das respostas do LLM
+
+O idioma escolhido no seletor (padrão: português) vale para a interface **e** para o que o LLM devolve. Os prompts do backend estão em **inglês**, e cada chamada recebe uma regra de idioma no fim (`get_language_instruction()` para texto livre e `get_json_language_instruction()` para JSON):
+
+- em respostas em JSON, só os **valores de texto legíveis** seguem o idioma; chaves, enums (`male`/`female`, `stance`, `poster_type`) e identificadores continuam em inglês;
+- os nomes de tipos de entidade (`PascalCase`) e de relações (`UPPER_SNAKE_CASE`) da ontologia seguem em inglês, mas as **descrições** seguem o idioma escolhido;
+- as perguntas de entrevista enviadas aos agentes e o resumo da entrevista também seguem o idioma.
+
+O que **não** muda de idioma, de propósito:
+
+- os rótulos fixos da saída das ferramentas de busca (por exemplo `【关键事实】`, `【核心实体】`, `分析问题:`) e os marcadores `【Twitter平台回答】`/`（该平台未获得回复）`: o `Step4Report` os lê com regex, então mudá-los exige alterar backend e front juntos;
+- a **referência de rotina diária da configuração de tempo** continua sendo a da China (UTC+8): é uma suposição de conteúdo, não de idioma;
+- as postagens dos agentes na simulação seguem o idioma da persona gerada (o OASIS monta o prompt do agente a partir dela).
+
 ### Cadastro e login (front, via Zeep Orbit)
 
 A tela `/auth` tem as abas **Entrar** e **Cadastrar** e fala **direto** com o Orbit (`/{app}/auth/register`, `login`, `refresh`, `me`, `logout`), então a senha não passa pelo backend do Noma. Depois do cadastro a pessoa já entra: o `register` devolve só o token, então o front faz o login em seguida para obter o refresh token.
