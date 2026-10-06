@@ -10,6 +10,7 @@ from zep_cloud.external_clients.ontology import (
     edge_model_to_api_schema,
     entity_model_to_api_schema,
 )
+from app.services.graph_backend.zep_backend import ZepBackend
 
 
 def test_normalize_string_attribute():
@@ -86,7 +87,7 @@ def test_graph_builder_safety_net_accepts_strings_and_skips_invalid_values():
         graph = GraphApi()
 
     builder = object.__new__(GraphBuilderService)
-    builder.client = Client()
+    builder.backend = ZepBackend(Client())
     builder.set_ontology("graph-id", {
         "entity_types": [{
             "name": "Speaker",
@@ -110,7 +111,7 @@ def test_graph_builder_emits_a_pinned_zep_sdk_compatible_schema():
         graph = GraphApi()
 
     builder = object.__new__(GraphBuilderService)
-    builder.client = Client()
+    builder.backend = ZepBackend(Client())
     builder.set_ontology("graph-id", {
         "entity_types": [{
             "name": "Speaker",
@@ -158,7 +159,7 @@ def test_graph_builder_passes_an_empty_entity_mapping_for_edge_only_ontology():
         graph = GraphApi()
 
     builder = object.__new__(GraphBuilderService)
-    builder.client = Client()
+    builder.backend = ZepBackend(Client())
     builder.set_ontology("graph-id", {
         "entity_types": [],
         "edge_types": [{
@@ -188,7 +189,7 @@ def test_graph_builder_deduplicates_and_caps_edge_source_targets_for_zep():
     source_targets.insert(1, dict(source_targets[0]))
 
     builder = object.__new__(GraphBuilderService)
-    builder.client = Client()
+    builder.backend = ZepBackend(Client())
     builder.set_ontology("graph-id", {
         "entity_types": [],
         "edge_types": [{

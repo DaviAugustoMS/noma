@@ -5,6 +5,7 @@ from queue import Queue
 import pytest
 
 from app.services import zep_graph_memory_updater as updater_module
+from app.services.graph_backend.zep_backend import ZepBackend
 from app.services.zep_graph_memory_updater import (
     AgentActivity,
     ZepGraphMemoryManager,
@@ -37,7 +38,9 @@ def _client(add):
 
 def _updater(monkeypatch, add, simulation_id="sim-1"):
     client = _client(add)
-    monkeypatch.setattr(updater_module, "get_zep_client", lambda _key: client)
+    monkeypatch.setattr(
+        updater_module, "get_graph_backend", lambda _key: ZepBackend(client)
+    )
     updater = ZepGraphMemoryUpdater(
         "graph-1",
         api_key="test-key",
@@ -183,7 +186,7 @@ def test_pending_episode_wait_has_a_deadline(monkeypatch):
         lambda **_kwargs: SimpleNamespace(uuid_="episode-1"),
     )
     updater._pending_episode_uuids = ["episode-1"]
-    updater.client.graph.episode.get = lambda **_kwargs: SimpleNamespace(
+    updater.backend.client.graph.episode.get = lambda **_kwargs: SimpleNamespace(
         processed=False
     )
     timestamps = iter([0.0, 2.0])

@@ -198,9 +198,9 @@ def test_stale_build_resumes_a_persisted_processing_batch(monkeypatch):
         def __init__(self, **_kwargs):
             pass
 
-        def get_batch_summary(self, batch_id):
+        def get_ingestion_status(self, batch_id):
             assert batch_id == "batch-1"
-            return SimpleNamespace(status="processing")
+            return "processing"
 
     class Thread:
         def __init__(self, *, target, daemon):

@@ -13,11 +13,8 @@ from queue import Queue, Empty
 from ..config import Config
 from ..utils.logger import get_logger
 from ..utils.locale import get_locale, set_locale
-from ..utils.zep import (
-    ZEP_INGESTION_WAIT_TIMEOUT_SECONDS,
-    call_zep_read_with_retry,
-    get_zep_client,
-)
+from ..utils.zep import ZEP_INGESTION_WAIT_TIMEOUT_SECONDS
+from .graph_backend import GraphBackend, get_graph_backend
 
 logger = get_logger('mirofish.zep_graph_memory_updater')
 
@@ -245,6 +242,7 @@ class ZepGraphMemoryUpdater:
         graph_id: str,
         api_key: Optional[str] = None,
         simulation_id: Optional[str] = None,
+        backend: Optional[GraphBackend] = None,
     ):
         """
         初始化更新器
@@ -252,15 +250,13 @@ class ZepGraphMemoryUpdater:
         Args:
             graph_id: Zep图谱ID
             api_key: Zep API Key（可选，默认从配置读取）
+            backend: 图谱后端（可选，默认按 GRAPH_BACKEND 构建）
         """
         self.graph_id = graph_id
         self.simulation_id = simulation_id or "unknown"
         self.api_key = api_key or Config.ZEP_API_KEY
-        
-        if not self.api_key:
-            raise ValueError("ZEP_API_KEY未配置")
-        
-        self.client = get_zep_client(self.api_key)
+
+        self.backend = backend or get_graph_backend(self.api_key)
         
         # 活动队列
         self._activity_queue: Queue = Queue()
@@ -491,10 +487,9 @@ class ZepGraphMemoryUpdater:
             if deadline is not None and time.time() >= deadline:
                 raise _DrainDeadlineExceeded(processed_count)
             try:
-                episode = self.client.graph.add(
-                    graph_id=self.graph_id,
-                    type="text",
-                    data=combined_text,
+                episode_uuid = self.backend.add_text(
+                    self.graph_id,
+                    combined_text,
                     created_at=self._to_rfc3339(payload_activities[-1].timestamp),
                     source_description="MiroFish simulation activity batch",
                     metadata={
@@ -516,12 +511,6 @@ class ZepGraphMemoryUpdater:
                     },
                 )
 
-                episode_uuid = (
-                    getattr(episode, "uuid_", None)
-                    or getattr(episode, "uuid", None)
-                )
-                if not episode_uuid:
-                    raise RuntimeError("Zep graph.add returned no episode UUID")
                 self._pending_episode_uuids.append(str(episode_uuid))
                 self._total_sent += 1
                 self._total_items_sent += len(payload_activities)
@@ -610,11 +599,7 @@ class ZepGraphMemoryUpdater:
                     "episode(s) pending"
                 )
             for episode_uuid in list(pending):
-                episode = call_zep_read_with_retry(
-                    lambda: self.client.graph.episode.get(uuid_=episode_uuid),
-                    operation_name=f"poll simulation episode {episode_uuid}",
-                )
-                if getattr(episode, "processed", False):
+                if self.backend.is_episode_processed(episode_uuid):
                     pending.remove(episode_uuid)
             if pending:
                 time.sleep(3)

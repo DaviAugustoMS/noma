@@ -5,12 +5,10 @@ Zep实体读取与过滤服务
 
 from typing import Dict, Any, List, Optional, Set, Callable, TypeVar
 from dataclasses import dataclass, field
-from zep_cloud import NotFoundError
 
 from ..config import Config
 from ..utils.logger import get_logger
-from ..utils.zep_paging import fetch_all_nodes, fetch_all_edges
-from ..utils.zep import call_zep_read_with_retry, get_zep_client
+from .graph_backend import GraphBackend, GraphNotFoundError, get_graph_backend
 
 logger = get_logger('mirofish.zep_entity_reader')
 
@@ -77,39 +75,14 @@ class ZepEntityReader:
     3. 获取每个实体的相关边和关联节点信息
     """
     
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        backend: Optional[GraphBackend] = None,
+    ):
         self.api_key = api_key or Config.ZEP_API_KEY
-        if not self.api_key:
-            raise ValueError("ZEP_API_KEY 未配置")
-        
-        self.client = get_zep_client(self.api_key)
-    
-    def _call_with_retry(
-        self, 
-        func: Callable[[], T], 
-        operation_name: str,
-        max_retries: int = 3,
-        initial_delay: float = 2.0
-    ) -> T:
-        """
-        带重试机制的Zep API调用
-        
-        Args:
-            func: 要执行的函数（无参数的lambda或callable）
-            operation_name: 操作名称，用于日志
-            max_retries: 最大重试次数（默认3次，即最多尝试3次）
-            initial_delay: 初始延迟秒数
-            
-        Returns:
-            API调用结果
-        """
-        return call_zep_read_with_retry(
-            func,
-            operation_name=operation_name,
-            max_attempts=max_retries,
-            initial_delay=initial_delay,
-        )
-    
+        self.backend = backend or get_graph_backend(self.api_key)
+
     def get_all_nodes(self, graph_id: str) -> List[Dict[str, Any]]:
         """
         获取图谱的所有节点（分页获取）
@@ -122,16 +95,16 @@ class ZepEntityReader:
         """
         logger.info(f"获取图谱 {graph_id} 的所有节点...")
 
-        nodes = fetch_all_nodes(self.client, graph_id)
+        nodes = self.backend.list_nodes(graph_id)
 
         nodes_data = []
         for node in nodes:
             nodes_data.append({
-                "uuid": getattr(node, 'uuid_', None) or getattr(node, 'uuid', ''),
-                "name": node.name or "",
-                "labels": node.labels or [],
-                "summary": node.summary or "",
-                "attributes": node.attributes or {},
+                "uuid": node.uuid,
+                "name": node.name,
+                "labels": node.labels,
+                "summary": node.summary,
+                "attributes": node.attributes,
             })
 
         logger.info(f"共获取 {len(nodes_data)} 个节点")
@@ -149,17 +122,17 @@ class ZepEntityReader:
         """
         logger.info(f"获取图谱 {graph_id} 的所有边...")
 
-        edges = fetch_all_edges(self.client, graph_id)
+        edges = self.backend.list_edges(graph_id)
 
         edges_data = []
         for edge in edges:
             edges_data.append({
-                "uuid": getattr(edge, 'uuid_', None) or getattr(edge, 'uuid', ''),
-                "name": edge.name or "",
-                "fact": edge.fact or "",
+                "uuid": edge.uuid,
+                "name": edge.name,
+                "fact": edge.fact,
                 "source_node_uuid": edge.source_node_uuid,
                 "target_node_uuid": edge.target_node_uuid,
-                "attributes": edge.attributes or {},
+                "attributes": edge.attributes,
             })
 
         logger.info(f"共获取 {len(edges_data)} 条边")
@@ -194,23 +167,19 @@ class ZepEntityReader:
                     or edge["target_node_uuid"] == node_uuid
                 ]
 
-            # 使用重试机制调用Zep API
-            edges = self._call_with_retry(
-                func=lambda: self.client.graph.node.get_edges(node_uuid=node_uuid),
-                operation_name=f"获取节点边(node={node_uuid[:8]}...)"
-            )
-            
+            edges = self.backend.get_node_edges(node_uuid)
+
             edges_data = []
             for edge in edges:
                 edges_data.append({
-                    "uuid": getattr(edge, 'uuid_', None) or getattr(edge, 'uuid', ''),
-                    "name": edge.name or "",
-                    "fact": edge.fact or "",
+                    "uuid": edge.uuid,
+                    "name": edge.name,
+                    "fact": edge.fact,
                     "source_node_uuid": edge.source_node_uuid,
                     "target_node_uuid": edge.target_node_uuid,
-                    "attributes": edge.attributes or {},
+                    "attributes": edge.attributes,
                 })
-            
+
             return edges_data
         except Exception as e:
             # An empty edge list is valid data. Authentication, permission and
@@ -353,11 +322,7 @@ class ZepEntityReader:
         """
         try:
             # 使用重试机制获取节点
-            node = self._call_with_retry(
-                func=lambda: self.client.graph.node.get(uuid_=entity_uuid),
-                operation_name=f"获取节点详情(uuid={entity_uuid[:8]}...)"
-            )
-            
+            node = self.backend.get_node(entity_uuid)
             if not node:
                 return None
             
@@ -403,16 +368,16 @@ class ZepEntityReader:
                     })
             
             return EntityNode(
-                uuid=getattr(node, 'uuid_', None) or getattr(node, 'uuid', ''),
-                name=node.name or "",
-                labels=node.labels or [],
-                summary=node.summary or "",
-                attributes=node.attributes or {},
+                uuid=node.uuid,
+                name=node.name,
+                labels=node.labels,
+                summary=node.summary,
+                attributes=node.attributes,
                 related_edges=related_edges,
                 related_nodes=related_nodes,
             )
             
-        except NotFoundError:
+        except GraphNotFoundError:
             return None
         except Exception as e:
             # Only an actual Zep 404 means "entity not found". Propagate 401,

@@ -30,6 +30,8 @@ class Config:
     LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini')
     
     # Zep配置
+    # Knowledge-graph provider (see app/services/graph_backend). Only 'zep' today.
+    GRAPH_BACKEND = os.environ.get('GRAPH_BACKEND', 'zep')
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
     
     # 文件上传配置
@@ -66,7 +68,10 @@ class Config:
         errors: list[str] = []
         if not cls.LLM_API_KEY:
             errors.append("LLM_API_KEY 未配置")
-        if not cls.ZEP_API_KEY:
+        graph_backend = (cls.GRAPH_BACKEND or "zep").strip().lower()
+        if graph_backend != "zep":
+            errors.append(f"GRAPH_BACKEND {graph_backend!r} 不受支持；可选值: zep")
+        elif not cls.ZEP_API_KEY:
             errors.append("ZEP_API_KEY 未配置")
         if os.environ.get("ZEP_API_URL"):
             errors.append("ZEP_API_URL 不受支持；MiroFish 仅连接 Zep Cloud")

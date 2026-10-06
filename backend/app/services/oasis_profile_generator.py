@@ -21,12 +21,7 @@ from ..config import Config
 from ..utils.logger import get_logger
 from ..utils.locale import get_language_instruction, get_locale, set_locale, t
 from ..utils.openai_chat_compat import create_chat_completion, extract_chat_completion_text
-from ..utils.zep import (
-    call_zep_read_with_retry,
-    get_zep_client,
-    is_retryable_zep_error,
-    normalize_zep_search_query,
-)
+from .graph_backend import GraphBackend, get_graph_backend
 from .zep_entity_reader import EntityNode, ZepEntityReader
 
 logger = get_logger('mirofish.oasis_profile')
@@ -277,7 +272,8 @@ class OasisProfileGenerator:
         base_url: Optional[str] = None,
         model_name: Optional[str] = None,
         zep_api_key: Optional[str] = None,
-        graph_id: Optional[str] = None
+        graph_id: Optional[str] = None,
+        graph_backend: Optional[GraphBackend] = None,
     ):
         self.api_key = api_key or Config.LLM_API_KEY
         self.base_url = base_url or Config.LLM_BASE_URL
@@ -293,12 +289,12 @@ class OasisProfileGenerator:
         
         # Zep客户端用于检索丰富上下文
         self.zep_api_key = zep_api_key or Config.ZEP_API_KEY
-        self.zep_client = None
+        self.graph_backend: Optional[GraphBackend] = graph_backend
         self.graph_id = graph_id
-        
-        if self.zep_api_key:
+
+        if self.graph_backend is None and self.zep_api_key:
             try:
-                self.zep_client = get_zep_client(self.zep_api_key)
+                self.graph_backend = get_graph_backend(self.zep_api_key)
             except Exception as e:
                 logger.warning(f"Zep客户端初始化失败: {e}")
     
@@ -391,7 +387,7 @@ class OasisProfileGenerator:
         """
         import concurrent.futures
         
-        if not self.zep_client:
+        if not self.graph_backend:
             return {"facts": [], "node_summaries": [], "context": ""}
         
         entity_name = entity.name
@@ -407,34 +403,26 @@ class OasisProfileGenerator:
             logger.debug(f"跳过Zep检索：未设置graph_id")
             return results
         
-        comprehensive_query = normalize_zep_search_query(
-            t('progress.zepSearchQuery', name=entity_name)
-        )
+        comprehensive_query = t('progress.zepSearchQuery', name=entity_name)
         
         def search_edges():
             """搜索边（事实/关系）- 带重试机制"""
-            return call_zep_read_with_retry(
-                lambda: self.zep_client.graph.search(
-                        query=comprehensive_query,
-                        graph_id=self.graph_id,
-                        limit=30,
-                        scope="edges",
-                        reranker="rrf"
-                ),
-                operation_name=f"profile edge search ({entity.uuid})",
+            return self.graph_backend.search(
+                self.graph_id,
+                comprehensive_query,
+                limit=30,
+                scope="edges",
+                reranker="rrf",
             )
         
         def search_nodes():
             """搜索节点（实体摘要）- 带重试机制"""
-            return call_zep_read_with_retry(
-                lambda: self.zep_client.graph.search(
-                        query=comprehensive_query,
-                        graph_id=self.graph_id,
-                        limit=20,
-                        scope="nodes",
-                        reranker="rrf"
-                ),
-                operation_name=f"profile node search ({entity.uuid})",
+            return self.graph_backend.search(
+                self.graph_id,
+                comprehensive_query,
+                limit=20,
+                scope="nodes",
+                reranker="rrf",
             )
         
         try:
@@ -452,19 +440,19 @@ class OasisProfileGenerator:
             
             # 处理边搜索结果
             all_facts = set()
-            if edge_result and hasattr(edge_result, 'edges') and edge_result.edges:
+            if edge_result:
                 for edge in edge_result.edges:
-                    if hasattr(edge, 'fact') and edge.fact:
+                    if edge.fact:
                         all_facts.add(edge.fact)
             results["facts"] = list(all_facts)
             
             # 处理节点搜索结果
             all_summaries = set()
-            if node_result and hasattr(node_result, 'nodes') and node_result.nodes:
+            if node_result:
                 for node in node_result.nodes:
-                    if hasattr(node, 'summary') and node.summary:
+                    if node.summary:
                         all_summaries.add(node.summary)
-                    if hasattr(node, 'name') and node.name and node.name != entity_name:
+                    if node.name and node.name != entity_name:
                         all_summaries.add(f"相关实体: {node.name}")
             results["node_summaries"] = list(all_summaries)
             
@@ -480,7 +468,7 @@ class OasisProfileGenerator:
             
         except Exception as e:
             logger.warning(f"Zep检索失败 ({entity_name}): {e}")
-            if not is_retryable_zep_error(e):
+            if not self.graph_backend.is_transient_error(e):
                 raise
         
         return results

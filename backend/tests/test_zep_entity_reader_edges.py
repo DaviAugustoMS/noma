@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 from app.services.zep_entity_reader import ZepEntityReader
 from zep_cloud.graph.node.client import NodeClient
+from app.services.graph_backend.zep_backend import ZepBackend
 
 
 def test_pinned_zep_sdk_exposes_get_edges_not_get_entity_edges():
@@ -31,7 +32,7 @@ def test_get_node_edges_uses_the_supported_sdk_method():
         graph = GraphApi()
 
     reader = object.__new__(ZepEntityReader)
-    reader.client = Client()
+    reader.backend = ZepBackend(Client())
 
     assert reader.get_node_edges("node-1") == [{
         "uuid": "edge-1",
