@@ -1,10 +1,10 @@
 <template>
   <div class="process-page">
-    <!-- 顶部导航栏 -->
+    <!-- Barra de navegação superior -->
     <nav class="navbar">
       <div class="nav-brand" @click="goHome">NOMA</div>
       
-      <!-- 中间步骤指示器 -->
+      <!-- Indicador de etapas central -->
       <div class="nav-center">
         <div class="step-badge">STEP 01</div>
         <div class="step-name">图谱构建</div>
@@ -16,9 +16,9 @@
       </div>
     </nav>
 
-    <!-- 主内容区 -->
+    <!-- Área de conteúdo principal -->
     <div class="main-content">
-      <!-- 左侧: 实时图谱展示 -->
+      <!-- Esquerda: exibição do grafo em tempo real -->
       <div class="left-panel" :class="{ 'full-screen': isFullScreen }">
         <div class="panel-header">
           <div class="header-left">
@@ -44,16 +44,16 @@
         </div>
         
         <div class="graph-container" ref="graphContainer">
-          <!-- 图谱可视化（只要有数据就显示） -->
+          <!-- Visualização do grafo (exibida sempre que houver dados) -->
           <div v-if="graphData" class="graph-view">
             <svg ref="graphSvg" class="graph-svg"></svg>
-            <!-- 构建中提示 -->
+            <!-- Aviso de construção em andamento -->
             <div v-if="currentPhase === 1" class="graph-building-hint">
               <span class="building-dot"></span>
               实时更新中...
             </div>
             
-            <!-- 节点/边详情面板 -->
+            <!-- Painel de detalhes de nó/aresta -->
             <div v-if="selectedItem" class="detail-panel">
               <div class="detail-panel-header">
                 <span class="detail-title">{{ selectedItem.type === 'node' ? 'Node Details' : 'Relationship' }}</span>
@@ -63,7 +63,7 @@
                 <button class="detail-close" @click="closeDetailPanel">×</button>
               </div>
               
-              <!-- 节点详情 -->
+              <!-- Detalhes do nó -->
               <div v-if="selectedItem.type === 'node'" class="detail-content">
                 <div class="detail-row">
                   <span class="detail-label">Name:</span>
@@ -104,9 +104,9 @@
                 </div>
               </div>
               
-              <!-- 边详情 -->
+              <!-- Detalhes da aresta -->
               <div v-else class="detail-content">
-                <!-- 关系展示 -->
+                <!-- Exibição da relação -->
                 <div class="edge-relation">
                   <span class="edge-source">{{ selectedItem.data.source_name || selectedItem.data.source_node_name }}</span>
                   <span class="edge-arrow">→</span>
@@ -164,7 +164,7 @@
             </div>
           </div>
           
-          <!-- 加载状态 -->
+          <!-- Estado de carregamento -->
           <div v-else-if="graphLoading" class="graph-loading">
             <div class="loading-animation">
               <div class="loading-ring"></div>
@@ -174,7 +174,7 @@
             <p class="loading-text">图谱数据加载中...</p>
           </div>
           
-          <!-- 等待构建 -->
+          <!-- Aguardando construção -->
           <div v-else-if="currentPhase < 1" class="graph-waiting">
             <div class="waiting-icon">
               <svg viewBox="0 0 100 100" class="network-icon">
@@ -193,7 +193,7 @@
             <p class="waiting-hint">生成完成后将自动开始构建图谱</p>
           </div>
           
-          <!-- 构建中但还没有数据 -->
+          <!-- Em construção, mas ainda sem dados -->
           <div v-else-if="currentPhase === 1 && !graphData" class="graph-waiting">
             <div class="loading-animation">
               <div class="loading-ring"></div>
@@ -204,14 +204,14 @@
             <p class="waiting-hint">数据即将显示...</p>
           </div>
           
-          <!-- 错误状态 -->
+          <!-- Estado de erro -->
           <div v-else-if="error" class="graph-error">
             <span class="error-icon">⚠</span>
             <p>{{ error }}</p>
           </div>
         </div>
         
-        <!-- 图谱图例 -->
+        <!-- Legenda do grafo -->
         <div v-if="graphData" class="graph-legend">
           <div class="legend-item" v-for="type in entityTypes" :key="type.name">
             <span class="legend-dot" :style="{ background: type.color }"></span>
@@ -221,7 +221,7 @@
         </div>
       </div>
 
-      <!-- 右侧: 构建流程详情 -->
+      <!-- Direita: detalhes do fluxo de construção -->
       <div class="right-panel" :class="{ 'hidden': isFullScreen }">
         <div class="panel-header dark-header">
           <span class="header-icon">▣</span>
@@ -229,7 +229,7 @@
         </div>
 
         <div class="process-content">
-          <!-- 阶段1: 本体生成 -->
+          <!-- Fase 1: geração da ontologia -->
           <div class="process-phase" :class="{ 'active': currentPhase === 0, 'completed': currentPhase > 0 }">
             <div class="phase-header">
               <span class="phase-num">01</span>
@@ -250,7 +250,7 @@
                 </div>
               </div>
               
-              <!-- 本体生成进度 -->
+              <!-- Progresso da geração da ontologia -->
               <div class="detail-section" v-if="ontologyProgress && currentPhase === 0">
                 <div class="detail-label">生成进度</div>
                 <div class="ontology-progress">
@@ -259,7 +259,7 @@
                 </div>
               </div>
               
-              <!-- 已生成的本体信息 -->
+              <!-- Informações da ontologia gerada -->
               <div class="detail-section" v-if="projectData?.ontology">
                 <div class="detail-label">生成的实体类型 ({{ projectData.ontology.entity_types?.length || 0 }})</div>
                 <div class="entity-tags">
@@ -293,14 +293,14 @@
                 </div>
               </div>
               
-              <!-- 等待状态 -->
+              <!-- Estado de espera -->
               <div class="detail-section waiting-state" v-if="!projectData?.ontology && currentPhase === 0 && !ontologyProgress">
                 <div class="waiting-hint">等待本体生成...</div>
               </div>
             </div>
           </div>
 
-          <!-- 阶段2: 图谱构建 -->
+          <!-- Fase 2: construção do grafo -->
           <div class="process-phase" :class="{ 'active': currentPhase === 1, 'completed': currentPhase > 1 }">
             <div class="phase-header">
               <span class="phase-num">02</span>
@@ -321,12 +321,12 @@
                 </div>
               </div>
               
-              <!-- 等待本体完成 -->
+              <!-- Aguardando a conclusão da ontologia -->
               <div class="detail-section waiting-state" v-if="currentPhase < 1">
                 <div class="waiting-hint">等待本体生成完成...</div>
               </div>
               
-              <!-- 构建进度 -->
+              <!-- Progresso da construção -->
               <div class="detail-section" v-if="buildProgress && currentPhase >= 1">
                 <div class="detail-label">构建进度</div>
                 <div class="progress-bar">
@@ -358,7 +358,7 @@
             </div>
           </div>
 
-          <!-- 阶段3: 完成 -->
+          <!-- Fase 3: concluído -->
           <div class="process-phase" :class="{ 'active': currentPhase === 2, 'completed': currentPhase > 2 }">
             <div class="phase-header">
               <span class="phase-num">03</span>
@@ -372,7 +372,7 @@
             </div>
           </div>
 
-          <!-- 下一步按钮 -->
+          <!-- Botão de próximo passo -->
           <div class="next-step-section" v-if="currentPhase >= 2">
             <button class="next-step-btn" @click="goToNextStep" :disabled="currentPhase < 2">
               进入环境搭建
@@ -381,7 +381,7 @@
           </div>
         </div>
 
-        <!-- 项目信息面板 -->
+        <!-- Painel de informações do projeto -->
         <div class="project-panel">
           <div class="project-header">
             <span class="project-icon">◇</span>
@@ -421,29 +421,29 @@ import * as d3 from 'd3'
 const route = useRoute()
 const router = useRouter()
 
-// 当前项目ID（可能从'new'变为实际ID）
+// ID do projeto atual (pode mudar de 'new' para o ID real)
 const currentProjectId = ref(route.params.projectId)
 
-// 状态
+// Estado
 const loading = ref(true)
 const graphLoading = ref(false)
 const error = ref('')
 const projectData = ref(null)
 const graphData = ref(null)
 const buildProgress = ref(null)
-const ontologyProgress = ref(null) // 本体生成进度
-const currentPhase = ref(-1) // -1: 上传中, 0: 本体生成中, 1: 图谱构建, 2: 完成
-const selectedItem = ref(null) // 选中的节点或边
+const ontologyProgress = ref(null) // Progresso da geração da ontologia
+const currentPhase = ref(-1) // -1: enviando, 0: gerando ontologia, 1: construindo grafo, 2: concluído
+const selectedItem = ref(null) // Nó ou aresta selecionado
 const isFullScreen = ref(false)
 
-// DOM引用
+// Referências do DOM
 const graphContainer = ref(null)
 const graphSvg = ref(null)
 
-// 轮询定时器
+// Timer de polling
 let pollTimer = null
 
-// 计算属性
+// Propriedades computadas
 const statusClass = computed(() => {
   if (error.value) return 'error'
   if (currentPhase.value >= 2) return 'completed'
@@ -475,13 +475,13 @@ const entityTypes = computed(() => {
   return Object.values(typeMap)
 })
 
-// 方法
+// Métodos
 const goHome = () => {
   router.push('/')
 }
 
 const goToNextStep = () => {
-  // TODO: 进入环境搭建步骤
+  // TODO: entrar na etapa de preparação do ambiente
   alert('环境搭建功能开发中...')
 }
 
@@ -493,12 +493,12 @@ const toggleFullScreen = () => {
   }, 350) 
 }
 
-// 关闭详情面板
+// Fechar o painel de detalhes
 const closeDetailPanel = () => {
   selectedItem.value = null
 }
 
-// 格式化日期
+// Formatar data
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
   try {
@@ -515,7 +515,7 @@ const formatDate = (dateStr) => {
   }
 }
 
-// 选中节点
+// Selecionar nó
 const selectNode = (nodeData, color) => {
   selectedItem.value = {
     type: 'node',
@@ -525,7 +525,7 @@ const selectNode = (nodeData, color) => {
   }
 }
 
-// 选中边
+// Selecionar aresta
 const selectEdge = (edgeData) => {
   selectedItem.value = {
     type: 'edge',
@@ -550,21 +550,21 @@ const getPhaseStatusText = (phase) => {
   return '等待中'
 }
 
-// 初始化 - 处理新建项目或加载已有项目
+// Inicialização - trata projeto novo ou carrega projeto existente
 const initProject = async () => {
   const paramProjectId = route.params.projectId
   
   if (paramProjectId === 'new') {
-    // 新建项目：从 store 获取待上传的数据
+    // Projeto novo: obtém do store os dados pendentes de upload
     await handleNewProject()
   } else {
-    // 加载已有项目
+    // Carrega projeto existente
     currentProjectId.value = paramProjectId
     await loadProject()
   }
 }
 
-// 处理新建项目 - 调用 ontology/generate API
+// Trata projeto novo - chama a API ontology/generate
 const handleNewProject = async () => {
   const pending = getPendingUpload()
   
@@ -576,28 +576,28 @@ const handleNewProject = async () => {
   
   try {
     loading.value = true
-    currentPhase.value = 0 // 本体生成阶段
+    currentPhase.value = 0 // Fase de geração da ontologia
     ontologyProgress.value = { message: '正在上传文件并分析文档...' }
     
-    // 构建 FormData
+    // Monta o FormData
     const formDataObj = new FormData()
     pending.files.forEach(file => {
       formDataObj.append('files', file)
     })
     formDataObj.append('simulation_requirement', pending.simulationRequirement)
     
-    // 调用本体生成 API
+    // Chama a API de geração da ontologia
     const response = await generateOntology(formDataObj)
     
     if (response.success) {
-      // 清除待上传数据
+      // Limpa os dados pendentes de upload
       clearPendingUpload()
       
-      // 更新项目ID和数据
+      // Atualiza o ID do projeto e os dados
       currentProjectId.value = response.data.project_id
       projectData.value = response.data
       
-      // 更新URL（不刷新页面）
+      // Atualiza a URL (sem recarregar a página)
       router.replace({
         name: 'Process',
         params: { projectId: response.data.project_id }
@@ -605,7 +605,7 @@ const handleNewProject = async () => {
       
       ontologyProgress.value = null
       
-      // 自动开始图谱构建
+      // Inicia a construção do grafo automaticamente
       await startBuildGraph()
     } else {
       error.value = response.error || '本体生成失败'
@@ -618,7 +618,7 @@ const handleNewProject = async () => {
   }
 }
 
-// 加载已有项目数据
+// Carrega os dados do projeto existente
 const loadProject = async () => {
   try {
     loading.value = true
@@ -628,18 +628,18 @@ const loadProject = async () => {
       projectData.value = response.data
       updatePhaseByStatus(response.data.status)
       
-      // 自动开始图谱构建
+      // Inicia a construção do grafo automaticamente
       if (response.data.status === 'ontology_generated' && !response.data.graph_id) {
         await startBuildGraph()
       }
       
-      // 继续轮询构建中的任务
+      // Continua o polling da tarefa em construção
       if (response.data.status === 'graph_building' && response.data.graph_build_task_id) {
         currentPhase.value = 1
         startPollingTask(response.data.graph_build_task_id)
       }
       
-      // 加载已完成的图谱
+      // Carrega o grafo já concluído
       if (response.data.status === 'graph_completed' && response.data.graph_id) {
         currentPhase.value = 2
         await loadGraph(response.data.graph_id)
@@ -673,11 +673,11 @@ const updatePhaseByStatus = (status) => {
   }
 }
 
-// 开始构建图谱
+// Inicia a construção do grafo
 const startBuildGraph = async () => {
   try {
     currentPhase.value = 1
-    // 设置初始进度
+    // Define o progresso inicial
     buildProgress.value = {
       progress: 0,
       message: '正在启动图谱构建...'
@@ -699,10 +699,10 @@ const startBuildGraph = async () => {
 
       buildProgress.value.message = '图谱构建任务已启动...'
       
-      // 保存 task_id 用于轮询
+      // Salva o task_id para o polling
       const taskId = response.data.task_id
       
-      // 启动任务状态轮询
+      // Inicia o polling do estado da tarefa
       startPollingTask(taskId)
     } else {
       error.value = response.error || '启动图谱构建失败'
@@ -715,28 +715,28 @@ const startBuildGraph = async () => {
   }
 }
 
-// 图谱数据轮询定时器
+// Timer de polling dos dados do grafo
 let graphPollTimer = null
 
-// 启动图谱数据轮询
+// Inicia o polling dos dados do grafo
 const startGraphPolling = () => {
-  // 立即获取一次
+  // Obtém imediatamente uma vez
   fetchGraphData()
   
-  // 每 10 秒自动获取一次图谱数据
+  // Obtém os dados do grafo automaticamente a cada 10 segundos
   graphPollTimer = setInterval(async () => {
     await fetchGraphData()
   }, 10000)
 }
 
-// 手动刷新图谱
+// Atualização manual do grafo
 const refreshGraph = async () => {
   graphLoading.value = true
   await fetchGraphData()
   graphLoading.value = false
 }
 
-// 停止图谱数据轮询
+// Para o polling dos dados do grafo
 const stopGraphPolling = () => {
   if (graphPollTimer) {
     clearInterval(graphPollTimer)
@@ -744,17 +744,17 @@ const stopGraphPolling = () => {
   }
 }
 
-// 获取图谱数据
+// Obtém os dados do grafo
 const fetchGraphData = async () => {
   try {
-    // 先获取项目信息以获取 graph_id
+    // Primeiro obtém as informações do projeto para obter o graph_id
     const projectResponse = await getProject(currentProjectId.value)
     
     if (projectResponse.success && projectResponse.data.graph_id) {
       const graphId = projectResponse.data.graph_id
       projectData.value = projectResponse.data
       
-      // 获取图谱数据
+      // Obtém os dados do grafo
       const graphResponse = await getGraphData(graphId)
       
       if (graphResponse.success && graphResponse.data) {
@@ -764,7 +764,7 @@ const fetchGraphData = async () => {
         
         console.log('Fetching graph data, nodes:', newNodeCount, 'edges:', newData.edge_count || newData.edges?.length || 0)
         
-        // 数据有变化时更新渲染
+        // Atualiza a renderização quando os dados mudam
         if (newNodeCount !== oldNodeCount || !graphData.value) {
           graphData.value = newData
           await nextTick()
@@ -777,18 +777,18 @@ const fetchGraphData = async () => {
   }
 }
 
-// 轮询任务状态
+// Polling do estado da tarefa
 const startPollingTask = (taskId) => {
-  // 立即执行一次查询
+  // Executa a consulta imediatamente uma vez
   pollTaskStatus(taskId)
   
-  // 然后定时轮询
+  // Depois faz polling periódico
   pollTimer = setInterval(() => {
     pollTaskStatus(taskId)
   }, 2000)
 }
 
-// 查询任务状态
+// Consulta o estado da tarefa
 const pollTaskStatus = async (taskId) => {
   try {
     const response = await getTaskStatus(taskId)
@@ -796,7 +796,7 @@ const pollTaskStatus = async (taskId) => {
     if (response.success) {
       const task = response.data
       
-      // 更新进度显示
+      // Atualiza a exibição do progresso
       buildProgress.value = {
         progress: task.progress || 0,
         message: task.message || '处理中...'
@@ -811,18 +811,18 @@ const pollTaskStatus = async (taskId) => {
         stopGraphPolling()
         currentPhase.value = 2
         
-        // 更新进度显示为完成状态
+        // Atualiza a exibição do progresso para o estado de concluído
         buildProgress.value = {
           progress: 100,
           message: '构建完成，正在加载图谱...'
         }
         
-        // 重新加载项目数据获取 graph_id
+        // Recarrega os dados do projeto para obter o graph_id
         const projectResponse = await getProject(currentProjectId.value)
         if (projectResponse.success) {
           projectData.value = projectResponse.data
           
-          // 最终加载完整图谱数据
+          // Carrega por fim os dados completos do grafo
           if (projectResponse.data.graph_id) {
             console.log('📊 加载完整图谱:', projectResponse.data.graph_id)
             await loadGraph(projectResponse.data.graph_id)
@@ -830,7 +830,7 @@ const pollTaskStatus = async (taskId) => {
           }
         }
         
-        // 清除进度显示
+        // Limpa a exibição do progresso
         buildProgress.value = null
       } else if (task.status === 'failed') {
         stopPolling()
@@ -851,7 +851,7 @@ const stopPolling = () => {
   }
 }
 
-// 加载图谱数据
+// Carrega os dados do grafo
 const loadGraph = async (graphId) => {
   try {
     graphLoading.value = true
@@ -869,7 +869,7 @@ const loadGraph = async (graphId) => {
   }
 }
 
-// 渲染图谱 (D3.js)
+// Renderiza o grafo (D3.js)
 const renderGraph = () => {
   if (!graphSvg.value || !graphData.value) {
     console.log('Cannot render: svg or data missing')
@@ -882,7 +882,7 @@ const renderGraph = () => {
     return
   }
   
-  // 获取容器尺寸
+  // Obtém as dimensões do contêiner
   const rect = container.getBoundingClientRect()
   const width = rect.width || 800
   const height = (rect.height || 600) - 60
@@ -901,13 +901,13 @@ const renderGraph = () => {
   
   svg.selectAll('*').remove()
   
-  // 处理节点数据
+  // Processa os dados dos nós
   const nodesData = graphData.value.nodes || []
   const edgesData = graphData.value.edges || []
   
   if (nodesData.length === 0) {
     console.log('No nodes to render')
-    // 显示空状态
+    // Exibe o estado vazio
     svg.append('text')
       .attr('x', width / 2)
       .attr('y', height / 2)
@@ -917,7 +917,7 @@ const renderGraph = () => {
     return
   }
   
-  // 创建节点映射用于查找名称
+  // Cria o mapa de nós para consulta de nomes
   const nodeMap = {}
   nodesData.forEach(n => {
     nodeMap[n.uuid] = n
@@ -927,10 +927,10 @@ const renderGraph = () => {
     id: n.uuid,
     name: n.name || '未命名',
     type: n.labels?.find(l => l !== 'Entity' && l !== 'Node') || 'Entity',
-    rawData: n // 保存原始数据
+    rawData: n // Salva os dados originais
   }))
   
-  // 创建节点ID集合用于过滤有效边
+  // Cria o conjunto de IDs de nós para filtrar arestas válidas
   const nodeIds = new Set(nodes.map(n => n.id))
   
   const edges = edgesData
@@ -948,13 +948,13 @@ const renderGraph = () => {
   
   console.log('Nodes:', nodes.length, 'Edges:', edges.length)
   
-  // 颜色映射
+  // Mapa de cores
   const types = [...new Set(nodes.map(n => n.type))]
   const colorScale = d3.scaleOrdinal()
     .domain(types)
     .range(['#FF6B35', '#004E89', '#7B2D8E', '#1A936F', '#C5283D', '#E9724C', '#2D3436', '#6C5CE7'])
   
-  // 力导向布局
+  // Layout dirigido por força
   const simulation = d3.forceSimulation(nodes)
     .force('link', d3.forceLink(edges).id(d => d.id).distance(100).strength(0.5))
     .force('charge', d3.forceManyBody().strength(-300))
@@ -963,7 +963,7 @@ const renderGraph = () => {
     .force('x', d3.forceX(width / 2).strength(0.05))
     .force('y', d3.forceY(height / 2).strength(0.05))
   
-  // 添加缩放功能
+  // Adiciona funcionalidade de zoom
   const g = svg.append('g')
   
   svg.call(d3.zoom()
@@ -973,7 +973,7 @@ const renderGraph = () => {
       g.attr('transform', event.transform)
     }))
   
-  // 绘制边（包含可点击的透明宽线）
+  // Desenha as arestas (incluindo linhas largas transparentes clicáveis)
   const linkGroup = g.append('g')
     .attr('class', 'links')
     .selectAll('g')
@@ -986,18 +986,18 @@ const renderGraph = () => {
       selectEdge(d.rawData)
     })
   
-  // 可见的细线
+  // Linha fina visível
   const link = linkGroup.append('line')
     .attr('stroke', '#ccc')
     .attr('stroke-width', 1.5)
     .attr('stroke-opacity', 0.6)
   
-  // 透明的宽线用于点击
+  // Linha larga transparente usada para o clique
   linkGroup.append('line')
     .attr('stroke', 'transparent')
     .attr('stroke-width', 10)
   
-  // 边标签
+  // Rótulos das arestas
   const linkLabel = g.append('g')
     .attr('class', 'link-labels')
     .selectAll('text')
@@ -1009,7 +1009,7 @@ const renderGraph = () => {
     .attr('text-anchor', 'middle')
     .text(d => d.type.length > 15 ? d.type.substring(0, 12) + '...' : d.type)
   
-  // 绘制节点
+  // Desenha os nós
   const node = g.append('g')
     .attr('class', 'nodes')
     .selectAll('g')
@@ -1041,20 +1041,20 @@ const renderGraph = () => {
     .attr('fill', '#333')
     .attr('font-family', 'JetBrains Mono, monospace')
   
-  // 点击空白处关闭详情面板
+  // Clicar em área vazia fecha o painel de detalhes
   svg.on('click', () => {
     closeDetailPanel()
   })
   
   simulation.on('tick', () => {
-    // 更新所有边的位置（包括可见线和透明点击区域）
+    // Atualiza a posição de todas as arestas (incluindo a linha visível e a área de clique transparente)
     linkGroup.selectAll('line')
       .attr('x1', d => d.source.x)
       .attr('y1', d => d.source.y)
       .attr('x2', d => d.target.x)
       .attr('y2', d => d.target.y)
     
-    // 更新边标签位置
+    // Atualiza a posição dos rótulos das arestas
     linkLabel
       .attr('x', d => (d.source.x + d.target.x) / 2)
       .attr('y', d => (d.source.y + d.target.y) / 2 - 5)
@@ -1080,14 +1080,14 @@ const renderGraph = () => {
   }
 }
 
-// 监听图谱数据变化
+// Observa mudanças nos dados do grafo
 watch(graphData, () => {
   if (graphData.value) {
     nextTick(() => renderGraph())
   }
 })
 
-// 生命周期
+// Ciclo de vida
 onMounted(() => {
   initProject()
 })
@@ -1099,7 +1099,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 变量 */
+/* Variáveis */
 :root {
   --black: #000000;
   --white: #FFFFFF;
@@ -1116,7 +1116,7 @@ onUnmounted(() => {
   overflow: hidden; /* Prevent body scroll in fullscreen */
 }
 
-/* 导航栏 */
+/* Barra de navegação */
 .navbar {
   display: flex;
   align-items: center;
@@ -1202,14 +1202,14 @@ onUnmounted(() => {
   color: #999;
 }
 
-/* 主内容区 */
+/* Área de conteúdo principal */
 .main-content {
   display: flex;
   height: calc(100vh - 56px);
   position: relative;
 }
 
-/* 左侧面板 - 50% default */
+/* Painel esquerdo - 50% por padrão */
 .left-panel {
   width: 50%;
   flex: none; /* Fixed width initially */
@@ -1319,7 +1319,7 @@ onUnmounted(() => {
   to { transform: rotate(360deg); }
 }
 
-/* 图谱容器 */
+/* Contêiner do grafo */
 .graph-container {
   flex: 1;
   position: relative;
@@ -1435,7 +1435,7 @@ onUnmounted(() => {
   animation: pulse 1s infinite;
 }
 
-/* 节点/边详情面板 */
+/* Painel de detalhes de nó/aresta */
 .detail-panel {
   position: absolute;
   top: 16px;
@@ -1551,7 +1551,7 @@ onUnmounted(() => {
   color: #666;
 }
 
-/* 边详情关系展示 */
+/* Exibição da relação nos detalhes da aresta */
 .edge-relation {
   display: flex;
   align-items: center;
@@ -1595,7 +1595,7 @@ onUnmounted(() => {
   border-bottom: 1px solid #E0E0E0;
 }
 
-/* Properties 属性列表 */
+/* Lista de propriedades de Properties */
 .properties-list {
   margin-top: 8px;
   padding: 10px;
@@ -1624,7 +1624,7 @@ onUnmounted(() => {
   word-break: break-word;
 }
 
-/* Episodes 列表 */
+/* Lista de Episodes */
 .episodes-list {
   margin-top: 8px;
   display: flex;
@@ -1649,7 +1649,7 @@ onUnmounted(() => {
   margin-bottom: 10px;
 }
 
-/* 图谱图例 */
+/* Legenda do grafo */
 .graph-legend {
   display: flex;
   flex-wrap: wrap;
@@ -1680,7 +1680,7 @@ onUnmounted(() => {
   color: #999;
 }
 
-/* 右侧面板 - 50% default */
+/* Painel direito - 50% por padrão */
 .right-panel {
   width: 50%;
   flex: none;
@@ -1710,14 +1710,14 @@ onUnmounted(() => {
   margin-right: 8px;
 }
 
-/* 流程内容 */
+/* Conteúdo do fluxo */
 .process-content {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
 }
 
-/* 流程阶段 */
+/* Fases do fluxo */
 .process-phase {
   margin-bottom: 24px;
   border: 1px solid #E0E0E0;
@@ -1803,12 +1803,12 @@ onUnmounted(() => {
   color: #fff;
 }
 
-/* 阶段详情 */
+/* Detalhes da fase */
 .phase-detail {
   padding: 16px;
 }
 
-/* 实体标签 */
+/* Rótulos de entidade */
 .entity-tags {
   display: flex;
   flex-wrap: wrap;
@@ -1823,7 +1823,7 @@ onUnmounted(() => {
   color: #333;
 }
 
-/* 关系列表 */
+/* Lista de relações */
 .relation-list {
   font-size: 0.8rem;
 }
@@ -1860,7 +1860,7 @@ onUnmounted(() => {
   font-size: 0.75rem;
 }
 
-/* 本体生成进度 */
+/* Progresso da geração da ontologia */
 .ontology-progress {
   display: flex;
   align-items: center;
@@ -1884,7 +1884,7 @@ onUnmounted(() => {
   color: #333;
 }
 
-/* 等待状态 */
+/* Estado de espera */
 .waiting-state {
   padding: 16px;
   background: #F9F9F9;
@@ -1897,7 +1897,7 @@ onUnmounted(() => {
   color: #999;
 }
 
-/* 进度条 */
+/* Barra de progresso */
 .progress-bar {
   height: 6px;
   background: #E0E0E0;
@@ -1926,7 +1926,7 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-/* 构建结果 */
+/* Resultado da construção */
 .build-result {
   display: flex;
   gap: 16px;
@@ -1954,7 +1954,7 @@ onUnmounted(() => {
   letter-spacing: 0.05em;
 }
 
-/* 下一步按钮 */
+/* Botão de próximo passo */
 .next-step-section {
   margin-top: 24px;
   padding-top: 24px;
@@ -1991,7 +1991,7 @@ onUnmounted(() => {
   font-size: 1.2rem;
 }
 
-/* 项目信息面板 */
+/* Painel de informações do projeto */
 .project-panel {
   border-top: 1px solid #E0E0E0;
   background: #FAFAFA;
@@ -2049,7 +2049,7 @@ onUnmounted(() => {
   color: #666;
 }
 
-/* 响应式 */
+/* Responsivo */
 @media (max-width: 1024px) {
   .main-content {
     flex-direction: column;

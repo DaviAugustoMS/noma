@@ -83,3 +83,17 @@ test('erros do backend: só reage aos códigos do guard de autenticação', () =
   assert.equal(apiAuthAction({ code: 'ERR_NETWORK' }), null)
   assert.equal(apiAuthAction(undefined), null)
 })
+
+import { logLevelClass } from '../src/lib/logLevel.js'
+
+test('console de log do relatório: nível e palavras (pt/zh) classificam a linha', () => {
+  assert.equal(logLevelClass('[10:00:01] ERROR: falha ao gerar a seção'), 'error')
+  assert.equal(logLevelClass('[10:00:01] INFO: houve um erro ao consultar o grafo'), 'error')
+  assert.equal(logLevelClass('[10:00:01] INFO: 生成章节时发生错误'), 'error')
+  assert.equal(logLevelClass('[10:00:01] WARNING: grafo vazio'), 'warning')
+  assert.equal(logLevelClass('[10:00:01] INFO: aviso: poucos fatos encontrados'), 'warning')
+  assert.equal(logLevelClass('[10:00:01] INFO: 警告 配置缺失'), 'warning')
+  assert.equal(logLevelClass('[10:00:01] INFO: seção concluída'), '')
+  assert.equal(logLevelClass('[10:00:01] INFO: terror e interrompido'), '')   // sem falso positivo no meio da palavra
+  assert.equal(logLevelClass(undefined), '')
+})

@@ -77,7 +77,7 @@ class GraphBuilderService:
         Returns:
             任务ID
         """
-        # 创建任务
+        # Cria a tarefa
         task_id = self.task_manager.create_task(
             task_type="graph_build",
             metadata={
@@ -90,7 +90,7 @@ class GraphBuilderService:
         # Capture locale before spawning background thread
         current_locale = get_locale()
 
-        # 在后台线程中执行构建
+        # Executa a construção em uma thread em segundo plano
         thread = threading.Thread(
             target=self._build_graph_worker,
             args=(task_id, text, ontology, graph_name, chunk_size, chunk_overlap, batch_size, current_locale)
@@ -127,7 +127,7 @@ class GraphBuilderService:
             self.validate_batch_chunks(chunks, batch_size=batch_size)
             total_chunks = len(chunks)
 
-            # 1. 创建图谱
+            # 1. Criar o grafo
             graph_id = self.create_graph(graph_name)
             self.task_manager.update_task(
                 task_id,
@@ -135,7 +135,7 @@ class GraphBuilderService:
                 message=t('progress.graphCreated', graphId=graph_id)
             )
             
-            # 2. 设置本体
+            # 2. Definir a ontologia
             self.set_ontology(graph_id, ontology)
             self.task_manager.update_task(
                 task_id,
@@ -143,14 +143,14 @@ class GraphBuilderService:
                 message=t('progress.ontologySet')
             )
             
-            # 3. 文本分块已在 Cloud mutation 前完成并验证
+            # 3. A divisão do texto em chunks já foi concluída e validada antes da mutation no Cloud
             self.task_manager.update_task(
                 task_id,
                 progress=20,
                 message=t('progress.textSplit', count=total_chunks)
             )
             
-            # 4. 分批发送数据
+            # 4. Enviar os dados em lotes
             submission = self.add_text_batches(
                 graph_id, chunks, batch_size,
                 lambda msg, prog: self.task_manager.update_task(
@@ -160,7 +160,7 @@ class GraphBuilderService:
                 )
             )
             
-            # 5. 等待Zep处理完成
+            # 5. Aguardar o Zep concluir o processamento
             self.task_manager.update_task(
                 task_id,
                 progress=60,
@@ -176,7 +176,7 @@ class GraphBuilderService:
                 )
             )
             
-            # 6. 获取图谱信息
+            # 6. Obter as informações do grafo
             self.task_manager.update_task(
                 task_id,
                 progress=90,
@@ -185,7 +185,7 @@ class GraphBuilderService:
             
             graph_info = self._get_graph_info(graph_id)
             
-            # 完成
+            # Concluído
             self.task_manager.complete_task(task_id, {
                 "graph_id": graph_id,
                 "graph_info": graph_info.to_dict(),
@@ -321,7 +321,7 @@ class GraphBuilderService:
                 )
 
             if pending_episodes:
-                time.sleep(3)  # 每3秒检查一次
+                time.sleep(3)  # Verifica a cada 3 segundos
 
         if progress_callback:
             progress_callback(t('progress.processingComplete', completed=completed_count, total=total_episodes), 1.0)

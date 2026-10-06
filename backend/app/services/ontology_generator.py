@@ -21,13 +21,13 @@ logger = logging.getLogger(__name__)
 
 def _to_pascal_case(name: str) -> str:
     """将任意格式的名称转换为 PascalCase（如 'works_for' -> 'WorksFor', 'person' -> 'Person'）"""
-    # 按非字母数字字符分割
+    # Dividir por caracteres não alfanuméricos
     parts = re.split(r'[^a-zA-Z0-9]+', name)
-    # 再按 camelCase 边界分割（如 'camelCase' -> ['camel', 'Case']）
+    # Depois dividir nas fronteiras de camelCase (ex.: 'camelCase' -> ['camel', 'Case'])
     words = []
     for part in parts:
         words.extend(re.sub(r'([a-z])([A-Z])', r'\1_\2', part).split('_'))
-    # 每个词首字母大写，过滤空串
+    # Colocar a inicial de cada palavra em maiúscula, filtrando strings vazias
     result = ''.join(word.capitalize() for word in words if word)
     return result if result else 'Unknown'
 
@@ -44,7 +44,7 @@ def _to_upper_snake_case(name: str) -> str:
     return normalized
 
 
-# 本体生成的系统提示词
+# Prompt de sistema para geração da ontologia
 ONTOLOGY_SYSTEM_PROMPT = """你是一个专业的知识图谱本体设计专家。你的任务是分析给定的文本内容和模拟需求，设计适合**社交媒体舆论模拟**的实体类型和关系类型。
 
 **重要：你必须输出有效的JSON格式数据，不要输出任何其他内容。**
@@ -217,7 +217,7 @@ class OntologyGenerator:
         Returns:
             本体定义（entity_types, edge_types等）
         """
-        # 构建用户消息
+        # Construir a mensagem do usuário
         user_message = self._build_user_message(
             document_texts, 
             simulation_requirement,
@@ -231,7 +231,7 @@ class OntologyGenerator:
             {"role": "user", "content": user_message}
         ]
         
-        # 调用LLM
+        # Chamar o LLM
         result = self.llm_client.chat_json(
             messages=messages,
             temperature=0.3,
@@ -242,12 +242,12 @@ class OntologyGenerator:
             max_attempts=2,
         )
         
-        # 验证和后处理
+        # Validação e pós-processamento
         result = self._validate_and_process(result)
         
         return result
     
-    # 传给 LLM 的文本最大长度（5万字）
+    # Tamanho máximo do texto enviado ao LLM (50 mil caracteres)
     MAX_TEXT_LENGTH_FOR_LLM = 50000
     LONG_TEXT_CHUNK_SIZE = 8000
     LONG_TEXT_CHUNK_OVERLAP = 200
@@ -497,7 +497,7 @@ class OntologyGenerator:
 
         result["entity_types"] = processed_entities
 
-        # 兜底类型定义
+        # Definição dos tipos de fallback
         person_fallback = {
             "name": "Person",
             "description": "Any individual person not fitting other specific person types.",
@@ -518,12 +518,12 @@ class OntologyGenerator:
             "examples": ["small business", "community group"]
         }
         
-        # 检查是否已有兜底类型
+        # Verificar se já existem tipos de fallback
         entity_names = {e["name"] for e in result["entity_types"]}
         has_person = "Person" in entity_names
         has_organization = "Organization" in entity_names
         
-        # 需要添加的兜底类型
+        # Tipos de fallback que precisam ser adicionados
         fallbacks_to_add = []
         if not has_person:
             fallbacks_to_add.append(person_fallback)
@@ -534,17 +534,17 @@ class OntologyGenerator:
             current_count = len(result["entity_types"])
             needed_slots = len(fallbacks_to_add)
             
-            # 如果添加后会超过 10 个，需要移除一些现有类型
+            # Se a adição ultrapassar 10 tipos, é preciso remover alguns tipos existentes
             if current_count + needed_slots > MAX_ONTOLOGY_TYPES:
-                # 计算需要移除多少个
+                # Calcular quantos precisam ser removidos
                 to_remove = current_count + needed_slots - MAX_ONTOLOGY_TYPES
-                # 从末尾移除（保留前面更重要的具体类型）
+                # Remover do final (preservando os tipos específicos do início, mais importantes)
                 result["entity_types"] = result["entity_types"][:-to_remove]
             
-            # 添加兜底类型
+            # Adicionar os tipos de fallback
             result["entity_types"].extend(fallbacks_to_add)
         
-        # 最终确保不超过限制（防御性编程）
+        # Garantir por fim que o limite não seja excedido (programação defensiva)
         result["entity_types"] = result["entity_types"][:MAX_ONTOLOGY_TYPES]
 
         # Resolve edge endpoints only after entity fallback/capping, so an edge
@@ -648,7 +648,7 @@ class OntologyGenerator:
             '',
         ]
         
-        # 生成实体类型
+        # Gerar tipos de entidade
         for entity in ontology.get("entity_types", []):
             name = entity["name"]
             desc = entity.get("description", f"A {name} entity.")
@@ -674,10 +674,10 @@ class OntologyGenerator:
         code_lines.append('# ============== 关系类型定义 ==============')
         code_lines.append('')
         
-        # 生成关系类型
+        # Gerar tipos de relação
         for edge in ontology.get("edge_types", []):
             name = edge["name"]
-            # 转换为PascalCase类名
+            # Converter para nome de classe em PascalCase
             class_name = ''.join(word.capitalize() for word in name.split('_'))
             desc = edge.get("description", f"A {name} relationship.")
             
@@ -699,7 +699,7 @@ class OntologyGenerator:
             code_lines.append('')
             code_lines.append('')
         
-        # 生成类型字典
+        # Gerar o dicionário de tipos
         code_lines.append('# ============== 类型配置 ==============')
         code_lines.append('')
         code_lines.append('ENTITY_TYPES = {')
@@ -716,7 +716,7 @@ class OntologyGenerator:
         code_lines.append('}')
         code_lines.append('')
         
-        # 生成边的source_targets映射
+        # Gerar o mapeamento source_targets das arestas
         code_lines.append('EDGE_SOURCE_TARGETS = {')
         for edge in ontology.get("edge_types", []):
             name = edge["name"]

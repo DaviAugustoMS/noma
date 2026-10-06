@@ -15,10 +15,10 @@ from ..utils.locale import t
 
 class TaskStatus(str, Enum):
     """任务状态枚举"""
-    PENDING = "pending"          # 等待中
-    PROCESSING = "processing"    # 处理中
-    COMPLETED = "completed"      # 已完成
-    FAILED = "failed"            # 失败
+    PENDING = "pending"          # Pendente
+    PROCESSING = "processing"    # Em processamento
+    COMPLETED = "completed"      # Concluída
+    FAILED = "failed"            # Falha
 
 
 @dataclass
@@ -29,12 +29,12 @@ class Task:
     status: TaskStatus
     created_at: datetime
     updated_at: datetime
-    progress: int = 0              # 总进度百分比 0-100
-    message: str = ""              # 状态消息
-    result: Optional[Dict] = None  # 任务结果
-    error: Optional[str] = None    # 错误信息
-    metadata: Dict = field(default_factory=dict)  # 额外元数据
-    progress_detail: Dict = field(default_factory=dict)  # 详细进度信息
+    progress: int = 0              # Percentual de progresso total, de 0 a 100
+    message: str = ""              # Mensagem de status
+    result: Optional[Dict] = None  # Resultado da tarefa
+    error: Optional[str] = None    # Informações de erro
+    metadata: Dict = field(default_factory=dict)  # Metadados adicionais
+    progress_detail: Dict = field(default_factory=dict)  # Informações detalhadas de progresso
     
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""

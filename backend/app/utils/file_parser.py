@@ -27,13 +27,13 @@ def _read_text_with_fallback(file_path: str) -> str:
     """
     data = Path(file_path).read_bytes()
     
-    # 首先尝试 UTF-8
+    # Primeiro tenta UTF-8
     try:
         return data.decode('utf-8')
     except UnicodeDecodeError:
         pass
     
-    # 尝试使用 charset_normalizer 检测编码
+    # Tenta detectar a codificação com charset_normalizer
     encoding = None
     try:
         from charset_normalizer import from_bytes
@@ -43,7 +43,7 @@ def _read_text_with_fallback(file_path: str) -> str:
     except Exception:
         pass
     
-    # 回退到 chardet
+    # Recorre ao chardet
     if not encoding:
         try:
             import chardet
@@ -52,7 +52,7 @@ def _read_text_with_fallback(file_path: str) -> str:
         except Exception:
             pass
     
-    # 最终兜底：使用 UTF-8 + replace
+    # Último recurso: usa UTF-8 + replace
     if not encoding:
         encoding = 'utf-8'
     
@@ -184,9 +184,9 @@ def split_text_into_chunks(
     while start < len(text):
         end = start + chunk_size
         
-        # 尝试在句子边界处分割
+        # Tenta dividir no limite de uma frase
         if end < len(text):
-            # 查找最近的句子结束符
+            # Procura o terminador de frase mais próximo
             for sep in ['。', '！', '？', '.\n', '!\n', '?\n', '\n\n', '. ', '! ', '? ']:
                 last_sep = text[start:end].rfind(sep)
                 if last_sep != -1 and last_sep > chunk_size * 0.3:
@@ -197,7 +197,7 @@ def split_text_into_chunks(
         if chunk:
             chunks.append(chunk)
         
-        # 下一个块从重叠位置开始
+        # O próximo bloco começa na posição de sobreposição
         start = end - overlap if end < len(text) else len(text)
     
     return chunks

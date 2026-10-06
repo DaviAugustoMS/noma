@@ -6,7 +6,7 @@
   >
     <div class="spotlight" aria-hidden="true"></div>
 
-    <!-- 顶部导航栏 -->
+    <!-- Barra de navegação superior -->
     <nav class="navbar" :class="{ scrolled: isScrolled }">
       <div class="nav-brand">
         <span class="brand-orb"></span>NOMA
@@ -138,7 +138,7 @@
           >
             <div class="console-glare" aria-hidden="true"></div>
 
-            <!-- 上传区域 -->
+            <!-- Área de upload -->
             <div class="console-section">
               <div class="console-header">
                 <span class="console-label">{{ $t('home.realitySeed') }}</span>
@@ -187,7 +187,7 @@
               <span>{{ $t('home.inputParams') }}</span>
             </div>
 
-            <!-- 输入区域 -->
+            <!-- Área de entrada -->
             <div class="console-section">
               <div class="console-header">
                 <span class="console-label">{{ $t('home.simulationPrompt') }}</span>
@@ -204,7 +204,7 @@
               </div>
             </div>
 
-            <!-- 启动按钮 -->
+            <!-- Botão de iniciar -->
             <div class="console-section btn-section">
               <transition name="file">
                 <div v-if="healthLevel === 'bad'" class="health-banner" role="alert">
@@ -227,7 +227,7 @@
         </div>
       </section>
 
-      <!-- 历史项目数据库 -->
+      <!-- Banco de dados de projetos históricos -->
       <div class="history-wrap reveal" v-reveal>
         <HistoryDatabase />
       </div>
@@ -247,41 +247,41 @@ import { getSystemCheck } from '../api/system'
 const router = useRouter()
 const { t } = useI18n()
 
-// 表单数据
+// Dados do formulário
 const formData = ref({
   simulationRequirement: ''
 })
 
-// 文件列表
+// Lista de arquivos
 const files = ref([])
 
-// 状态
+// Estado
 const loading = ref(false)
 const error = ref('')
 const isDragOver = ref(false)
 
-// 文件输入引用
+// Referência do input de arquivo
 const fileInput = ref(null)
 
-// 计算属性:是否可以提交
+// Propriedade computada: se é possível enviar
 const canSubmit = computed(() => {
   return formData.value.simulationRequirement.trim() !== '' && files.value.length > 0
 })
 
-// 触发文件选择
+// Dispara a seleção de arquivo
 const triggerFileInput = () => {
   if (!loading.value) {
     fileInput.value?.click()
   }
 }
 
-// 处理文件选择
+// Trata a seleção de arquivo
 const handleFileSelect = (event) => {
   const selectedFiles = Array.from(event.target.files)
   addFiles(selectedFiles)
 }
 
-// 处理拖拽相关
+// Trata eventos de arrastar e soltar
 const handleDragOver = (e) => {
   if (!loading.value) {
     isDragOver.value = true
@@ -300,7 +300,7 @@ const handleDrop = (e) => {
   addFiles(droppedFiles)
 }
 
-// 添加文件
+// Adicionar arquivo
 const addFiles = (newFiles) => {
   const validFiles = newFiles.filter(file => {
     const ext = file.name.split('.').pop().toLowerCase()
@@ -309,12 +309,12 @@ const addFiles = (newFiles) => {
   files.value.push(...validFiles)
 }
 
-// 移除文件
+// Remover arquivo
 const removeFile = (index) => {
   files.value.splice(index, 1)
 }
 
-// 滚动到底部
+// Rolar até o final
 const scrollToBottom = () => {
   window.scrollTo({
     top: document.body.scrollHeight,
@@ -322,15 +322,15 @@ const scrollToBottom = () => {
   })
 }
 
-// 开始模拟 - 立即跳转，API调用在Process页面进行
+// Iniciar simulação - redireciona imediatamente, a chamada de API é feita na página Process
 const startSimulation = () => {
   if (!canSubmit.value || loading.value) return
 
-  // 存储待上传的数据
+  // Armazena os dados pendentes de upload
   import('../store/pendingUpload.js').then(({ setPendingUpload }) => {
     setPendingUpload(files.value, formData.value.simulationRequirement)
 
-    // 立即跳转到Process页面（使用特殊标识表示新建项目）
+    // Redireciona imediatamente para a página Process (usando um identificador especial para indicar novo projeto)
     router.push({
       name: 'Process',
       params: { projectId: 'new' }
@@ -435,7 +435,7 @@ const onScroll = () => {
   isScrolled.value = window.scrollY > 24
 }
 
-// ---------- 服务健康检查 (LLM / Zep) ----------
+// ---------- Verificação de saúde dos serviços (LLM / Zep) ----------
 const health = ref(null) // null = verificando; { backend: false } = backend offline; senão dados do /api/system/check
 let healthTimer = null
 

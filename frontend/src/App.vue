@@ -12,7 +12,7 @@ import OceanBackground from './components/OceanBackground.vue'
 </script>
 
 <style>
-/* 全局样式重置 */
+/* Reset de estilos globais */
 * {
   margin: 0;
   padding: 0;
@@ -25,7 +25,7 @@ import OceanBackground from './components/OceanBackground.vue'
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 全局按钮样式 */
+/* Estilos globais de botão */
 button {
   font-family: inherit;
 }

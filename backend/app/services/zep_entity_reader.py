@@ -12,7 +12,7 @@ from .graph_backend import GraphBackend, GraphNotFoundError, get_graph_backend
 
 logger = get_logger('mirofish.zep_entity_reader')
 
-# 用于泛型返回类型
+# Usado para tipo de retorno genérico
 T = TypeVar('T')
 
 
@@ -24,9 +24,9 @@ class EntityNode:
     labels: List[str]
     summary: str
     attributes: Dict[str, Any]
-    # 相关的边信息
+    # Informações das arestas relacionadas
     related_edges: List[Dict[str, Any]] = field(default_factory=list)
-    # 相关的其他节点信息
+    # Informações dos demais nós relacionados
     related_nodes: List[Dict[str, Any]] = field(default_factory=list)
     
     def to_dict(self) -> Dict[str, Any]:
@@ -93,7 +93,7 @@ class ZepEntityReader:
         Returns:
             节点列表
         """
-        logger.info(f"获取图谱 {graph_id} 的所有节点...")
+        logger.info(f"Obtendo todos os nós do grafo {graph_id}...")
 
         nodes = self.backend.list_nodes(graph_id)
 
@@ -107,7 +107,7 @@ class ZepEntityReader:
                 "attributes": node.attributes,
             })
 
-        logger.info(f"共获取 {len(nodes_data)} 个节点")
+        logger.info(f"Total de {len(nodes_data)} nós obtidos")
         return nodes_data
 
     def get_all_edges(self, graph_id: str) -> List[Dict[str, Any]]:
@@ -120,7 +120,7 @@ class ZepEntityReader:
         Returns:
             边列表
         """
-        logger.info(f"获取图谱 {graph_id} 的所有边...")
+        logger.info(f"Obtendo todas as arestas do grafo {graph_id}...")
 
         edges = self.backend.list_edges(graph_id)
 
@@ -135,7 +135,7 @@ class ZepEntityReader:
                 "attributes": edge.attributes,
             })
 
-        logger.info(f"共获取 {len(edges_data)} 条边")
+        logger.info(f"Total de {len(edges_data)} arestas obtidas")
         return edges_data
     
     def get_node_edges(
@@ -184,7 +184,7 @@ class ZepEntityReader:
         except Exception as e:
             # An empty edge list is valid data. Authentication, permission and
             # transport failures must not be made indistinguishable from it.
-            logger.error(f"获取节点 {node_uuid} 的边失败: {str(e)}")
+            logger.error(f"Falha ao obter as arestas do nó {node_uuid}: {str(e)}")
             raise
     
     def filter_defined_entities(
@@ -208,33 +208,33 @@ class ZepEntityReader:
         Returns:
             FilteredEntities: 过滤后的实体集合
         """
-        logger.info(f"开始筛选图谱 {graph_id} 的实体...")
+        logger.info(f"Iniciando a filtragem das entidades do grafo {graph_id}...")
         
-        # 获取所有节点
+        # Obtém todos os nós
         all_nodes = self.get_all_nodes(graph_id)
         total_count = len(all_nodes)
         
-        # 获取所有边（用于后续关联查找）
+        # Obtém todas as arestas (para busca de associações posterior)
         all_edges = self.get_all_edges(graph_id) if enrich_with_edges else []
         
-        # 构建节点UUID到节点数据的映射
+        # Constrói o mapeamento de UUID do nó para os dados do nó
         node_map = {n["uuid"]: n for n in all_nodes}
         
-        # 筛选符合条件的实体
+        # Filtra as entidades que atendem às condições
         filtered_entities = []
         entity_types_found = set()
         
         for node in all_nodes:
             labels = node.get("labels", [])
             
-            # 筛选逻辑：Labels必须包含除"Entity"和"Node"之外的标签
+            # Lógica de filtragem: Labels deve conter rótulos além de "Entity" e "Node"
             custom_labels = [l for l in labels if l not in ["Entity", "Node"]]
             
             if not custom_labels:
-                # 只有默认标签，跳过
+                # Apenas rótulos padrão, ignora
                 continue
             
-            # 如果指定了预定义类型，检查是否匹配
+            # Se tipos predefinidos foram especificados, verifica se correspondem
             if defined_entity_types:
                 matching_labels = [l for l in custom_labels if l in defined_entity_types]
                 if not matching_labels:
@@ -245,7 +245,7 @@ class ZepEntityReader:
             
             entity_types_found.add(entity_type)
             
-            # 创建实体节点对象
+            # Cria o objeto de nó de entidade
             entity = EntityNode(
                 uuid=node["uuid"],
                 name=node["name"],
@@ -254,7 +254,7 @@ class ZepEntityReader:
                 attributes=node["attributes"],
             )
             
-            # 获取相关边和节点
+            # Obtém as arestas e nós relacionados
             if enrich_with_edges:
                 related_edges = []
                 related_node_uuids = set()
@@ -279,7 +279,7 @@ class ZepEntityReader:
                 
                 entity.related_edges = related_edges
                 
-                # 获取关联节点的基本信息
+                # Obtém as informações básicas dos nós associados
                 related_nodes = []
                 for related_uuid in related_node_uuids:
                     if related_uuid in node_map:
@@ -295,8 +295,8 @@ class ZepEntityReader:
             
             filtered_entities.append(entity)
         
-        logger.info(f"筛选完成: 总节点 {total_count}, 符合条件 {len(filtered_entities)}, "
-                   f"实体类型: {entity_types_found}")
+        logger.info(f"Filtragem concluída: total de nós {total_count}, atendem às condições {len(filtered_entities)}, "
+                   f"tipos de entidade: {entity_types_found}")
         
         return FilteredEntities(
             entities=filtered_entities,
@@ -321,19 +321,19 @@ class ZepEntityReader:
             EntityNode或None
         """
         try:
-            # 使用重试机制获取节点
+            # Obtém o nó usando mecanismo de nova tentativa
             node = self.backend.get_node(entity_uuid)
             if not node:
                 return None
             
-            # 获取节点的边
+            # Obtém as arestas do nó
             edges = self.get_node_edges(entity_uuid, graph_id=graph_id)
             
-            # 获取所有节点用于关联查找
+            # Obtém todos os nós para busca de associações
             all_nodes = self.get_all_nodes(graph_id)
             node_map = {n["uuid"]: n for n in all_nodes}
             
-            # 处理相关边和节点
+            # Processa as arestas e nós relacionados
             related_edges = []
             related_node_uuids = set()
             
@@ -355,7 +355,7 @@ class ZepEntityReader:
                     })
                     related_node_uuids.add(edge["source_node_uuid"])
             
-            # 获取关联节点信息
+            # Obtém as informações dos nós associados
             related_nodes = []
             for related_uuid in related_node_uuids:
                 if related_uuid in node_map:
@@ -383,7 +383,7 @@ class ZepEntityReader:
             # Only an actual Zep 404 means "entity not found". Propagate 401,
             # 403 and exhausted transport errors so callers cannot prepare a
             # simulation with silently incomplete graph context.
-            logger.error(f"获取实体 {entity_uuid} 失败: {str(e)}")
+            logger.error(f"Falha ao obter a entidade {entity_uuid}: {str(e)}")
             raise
     
     def get_entities_by_type(
