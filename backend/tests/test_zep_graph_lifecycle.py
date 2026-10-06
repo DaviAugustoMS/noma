@@ -191,7 +191,7 @@ def test_stale_build_resumes_a_persisted_processing_batch(monkeypatch):
         def get_task(self, _task_id):
             return None
 
-        def create_task(self, _description):
+        def create_task(self, _description, metadata=None):
             return "task-resumed"
 
     class Builder:

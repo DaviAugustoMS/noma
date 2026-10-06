@@ -33,6 +33,15 @@ class Config:
     # Knowledge-graph provider (see app/services/graph_backend). Only 'zep' today.
     GRAPH_BACKEND = os.environ.get('GRAPH_BACKEND', 'zep')
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
+
+    # Espelho durável do estado (tarefas e checkpoints) no Zeep Orbit. Opcional:
+    # sem ORBIT_BASE_URL e ORBIT_API_TOKEN nada é gravado fora do disco local.
+    ORBIT_BASE_URL = os.environ.get('ORBIT_BASE_URL', '').strip()
+    ORBIT_APP = os.environ.get('ORBIT_APP', 'mirofish').strip()
+    ORBIT_API_TOKEN = os.environ.get('ORBIT_API_TOKEN', '').strip()
+    # Ao subir, tarefas ativas no Orbit sem atualização há mais de N segundos
+    # viram "failed (interrupted)". 0 = sempre (um único backend por app).
+    ORBIT_ORPHAN_GRACE_SECONDS = int(os.environ.get('ORBIT_ORPHAN_GRACE_SECONDS', '0'))
     
     # 文件上传配置
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB

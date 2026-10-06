@@ -79,6 +79,29 @@ Opcionais:
 | `GRAPH_BACKEND` | Provedor do grafo de conhecimento. Hoje só `zep` (padrão). A camada está isolada em `backend/app/services/graph_backend`, o que permite adicionar outro provedor sem tocar nos serviços. |
 | `FLASK_HOST`, `FLASK_PORT` | Endereço e porta do backend (padrão `127.0.0.1:5001`). |
 
+### Estado durável no Zeep Orbit (opcional)
+
+Espelha **tarefas** e **checkpoints de etapas** (hoje, o build do grafo) em tabelas do Zeep Orbit, para consultar o histórico e saber onde cada execução parou depois de um reinício. Sem as variáveis abaixo nada é gravado fora do disco local.
+
+| Variável | Para que serve |
+|---|---|
+| `ORBIT_BASE_URL` | URL da instância, **sem** `/{app}` no final (por exemplo, `https://orbit.dlec.app`). |
+| `ORBIT_APP` | Nome do app (padrão `mirofish`). |
+| `ORBIT_API_TOKEN` | Token de API **do app**, emitido no dashboard do Orbit. Não use um PAT pessoal. |
+| `ORBIT_ORPHAN_GRACE_SECONDS` | Ao subir, tarefas ativas no Orbit sem atualização há mais de N segundos viram `failed (interrupted)`. `0` (padrão) assume um único backend por app. |
+
+Como funciona:
+
+- O disco e a memória continuam sendo a fonte para as decisões do app. O Orbit é um **espelho**: as gravações são assíncronas, com repetição e descarte em caso de falha, então uma indisponibilidade do Orbit nunca interrompe um build.
+- O `TaskManager` copia cada mudança de tarefa. O build do grafo grava os checkpoints `chunked → graph_created → ontology_set → ingestion_submitted → ingestion_complete → graph_fetched → completed` (ou `failed`), com IDs e contagens, **sem conteúdo dos documentos**.
+- O token do app **expira**. Ao receber `401`, o cliente chama `POST /{app}/auth/token/refresh` uma vez e segue com o token renovado **só em memória** (não é gravado em lugar nenhum). Se o token já estiver expirado de vez ao subir o backend, emita outro no dashboard e atualize o `.env`; enquanto isso as gravações são descartadas com aviso no log e o app continua funcionando.
+- As tarefas **não** são recarregadas do Orbit para a memória: uma tarefa `processing` restaurada pareceria um build ativo e atrapalharia a retomada existente.
+
+Tabelas do app (RLS desligada; o acesso é pelo token do app):
+
+- `tasks`: `task_id` (único), `task_type`, `status`, `progress`, `message`, `result`, `error`, `metadata`, `progress_detail` (jsonb), `project_id`, `task_created_at`, `task_updated_at`.
+- `steps`: `entity_type`, `entity_id`, `step`, `status`, `seq`, `payload` (jsonb), `error`, `started_at`, `finished_at`, com índice único em `(entity_type, entity_id, step)`.
+
 ### Usando um modelo local (exemplo com Ollama)
 
 ```env

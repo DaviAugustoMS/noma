@@ -14,6 +14,11 @@ from . import graph_bp
 from ..config import Config
 from ..services.ontology_generator import OntologyGenerator
 from ..services.graph_backend import GraphNotFoundError
+from ..services.state_store import (
+    STEP_COMPLETED,
+    STEP_FAILED,
+    record_step,
+)
 from ..services.graph_builder import BatchSubmission, GraphBuilderService
 from ..services.text_processor import TextProcessor
 from ..utils.file_parser import FileParser
@@ -707,7 +712,10 @@ def _build_graph_impl():
         
         # 创建异步任务
         task_manager = TaskManager()
-        task_id = task_manager.create_task(f"构建图谱: {graph_name}")
+        task_id = task_manager.create_task(
+            f"构建图谱: {graph_name}",
+            metadata={"project_id": project_id},
+        )
         logger.info(f"创建图谱构建任务: task_id={task_id}, project_id={project_id}")
         
         # 更新项目状态
@@ -722,6 +730,14 @@ def _build_graph_impl():
         def build_task():
             set_locale(current_locale)
             build_logger = get_logger('mirofish.build')
+
+            def checkpoint(seq, step, **payload):
+                # Checkpoint durável (Orbit), best effort: nunca interrompe o build.
+                record_step(
+                    "graph_build", task_id, step, STEP_COMPLETED,
+                    seq=seq, payload={"project_id": project_id, **payload},
+                )
+
             try:
                 build_logger.info(f"[{task_id}] 开始构建图谱...")
                 task_manager.update_task(
@@ -746,6 +762,7 @@ def _build_graph_impl():
                 )
                 builder.validate_batch_chunks(chunks, batch_size=350)
                 total_chunks = len(chunks)
+                checkpoint(1, "chunked", chunk_count=total_chunks)
                 
                 if resume_existing_batch:
                     graph_id = project.graph_id
@@ -765,6 +782,10 @@ def _build_graph_impl():
                         message=t('progress.waitingZepProcess'),
                         progress=55,
                     )
+                    checkpoint(
+                        2, "resumed_batch",
+                        graph_id=graph_id, batch_id=submission.batch_id,
+                    )
                 else:
                     # 创建图谱
                     task_manager.update_task(
@@ -781,6 +802,7 @@ def _build_graph_impl():
                         name=graph_name,
                         graph_id_callback=remember_graph,
                     )
+                    checkpoint(2, "graph_created", graph_id=graph_id)
 
                     # 设置本体
                     task_manager.update_task(
@@ -789,6 +811,7 @@ def _build_graph_impl():
                         progress=15
                     )
                     builder.set_ontology(graph_id, ontology)
+                    checkpoint(3, "ontology_set", graph_id=graph_id)
 
                     # 添加文本（progress_callback 签名是 (msg, progress_ratio)）
                     def add_progress_callback(msg, progress_ratio):
@@ -817,6 +840,11 @@ def _build_graph_impl():
                         progress_callback=add_progress_callback,
                         batch_created_callback=remember_batch,
                     )
+                    checkpoint(
+                        4, "ingestion_submitted",
+                        graph_id=graph_id, batch_id=submission.batch_id,
+                        operation_id=submission.operation_id,
+                    )
                 
                 # 等待Zep处理完成（查询每个episode的processed状态）
                 task_manager.update_task(
@@ -834,6 +862,7 @@ def _build_graph_impl():
                     )
                 
                 builder._wait_for_batch(submission, wait_progress_callback)
+                checkpoint(5, "ingestion_complete", graph_id=graph_id)
                 
                 # 获取图谱数据
                 task_manager.update_task(
@@ -845,6 +874,7 @@ def _build_graph_impl():
                 
                 node_count = graph_data.get("node_count", 0)
                 edge_count = graph_data.get("edge_count", 0)
+                checkpoint(6, "graph_fetched", node_count=node_count, edge_count=edge_count)
                 build_logger.info(f"[{task_id}] 图谱构建完成: graph_id={graph_id}, 节点={node_count}, 边={edge_count}")
 
                 # Publish local project/task terminal state under the same
@@ -868,6 +898,7 @@ def _build_graph_impl():
                             "zep_batch_id": submission.batch_id,
                         }
                     )
+                checkpoint(7, "completed", graph_id=graph_id)
                 
             except Exception as e:
                 # 更新项目状态为失败
@@ -885,6 +916,10 @@ def _build_graph_impl():
                         message=t('progress.buildFailed', error=str(e)),
                         error=str(e)
                     )
+                record_step(
+                    "graph_build", task_id, "failed", STEP_FAILED,
+                    seq=99, payload={"project_id": project_id}, error=str(e)[:500],
+                )
         
         # 启动后台线程
         thread = threading.Thread(target=build_task, daemon=True)

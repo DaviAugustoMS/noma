@@ -97,7 +97,9 @@ class TaskManager:
         
         with self._task_lock:
             self._tasks[task_id] = task
-        
+            snapshot = task.to_dict()
+
+        self._mirror(snapshot)
         return task_id
     
     def get_task(self, task_id: str) -> Optional[Task]:
@@ -143,6 +145,22 @@ class TaskManager:
                     task.error = error
                 if progress_detail is not None:
                     task.progress_detail = progress_detail
+                snapshot = task.to_dict()
+            else:
+                snapshot = None
+
+        if snapshot is not None:
+            self._mirror(snapshot)
+
+    @staticmethod
+    def _mirror(snapshot: Dict[str, Any]) -> None:
+        """Best-effort durable copy; never affects the in-memory task."""
+        try:
+            from ..services.state_store import get_state_store
+
+            get_state_store().save_task(snapshot)
+        except Exception:
+            pass
     
     def complete_task(self, task_id: str, result: Dict):
         """标记任务完成"""

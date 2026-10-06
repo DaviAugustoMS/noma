@@ -53,6 +53,24 @@ def create_app(config_class=Config):
     if should_log_startup:
         logger.info("已注册模拟进程清理函数")
     
+    # Espelho durável (Orbit): fecha tarefas que o processo anterior deixou ativas.
+    if should_log_startup:
+        from .services.state_store import is_state_store_configured, reconcile_orphan_tasks
+
+        if is_state_store_configured():
+            import threading
+
+            def _reconcile_orphans():
+                try:
+                    reconcile_orphan_tasks()
+                except Exception as error:  # nunca impede o servidor de subir
+                    get_logger('mirofish.state_store').warning(
+                        "Falha ao reconciliar tarefas órfãs: %s", type(error).__name__
+                    )
+
+            threading.Thread(target=_reconcile_orphans, daemon=True,
+                             name="StateStoreReconcile").start()
+
     # 请求日志中间件
     @app.before_request
     def validate_route_ids():
