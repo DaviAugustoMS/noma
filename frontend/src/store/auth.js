@@ -95,17 +95,15 @@ export async function signUp({ email, password, name }) {
   }
 }
 
-export async function signOut() {
+export function signOut() {
   const token = state.token
   restorePromise = null
   clearSession()
   if (token) {
-    try {
-      await authApi.logout(token)
-    } catch {
-      // O token local já foi descartado; falha de rede aqui não importa.
-    }
+    // Não esperamos: a sessão local já foi descartada e a tela não deve aguardar a rede.
+    authApi.logout(token).catch(() => {})
   }
+  return Promise.resolve()
 }
 
 let restorePromise = null
@@ -144,4 +142,27 @@ export function restoreSession() {
     // Depois de um logout/login manual, a próxima restauração deve rodar de novo.
     if (!state.token) restorePromise = null
   })
+}
+
+let refreshing = null
+
+/**
+ * Renova o token com o refresh token (uma renovação por vez, mesmo com várias
+ * chamadas falhando juntas). Devolve true se a sessão foi renovada.
+ */
+export function refreshSession() {
+  if (!state.refreshToken) return Promise.resolve(false)
+  if (!refreshing) {
+    refreshing = authApi
+      .refresh(state.refreshToken)
+      .then((tokens) => {
+        setTokens(tokens)
+        return true
+      })
+      .catch(() => false)
+      .finally(() => {
+        refreshing = null
+      })
+  }
+  return refreshing
 }

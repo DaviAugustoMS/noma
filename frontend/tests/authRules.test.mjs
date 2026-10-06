@@ -67,3 +67,19 @@ test('redirecionamento só aceita caminhos internos', () => {
   }
   assert.equal(safeRedirect('https://evil.example', '/home'), '/home')
 })
+
+import { apiAuthAction } from '../src/lib/authRules.js'
+
+test('erros do backend: só reage aos códigos do guard de autenticação', () => {
+  const err = (status, code) => ({ response: { status, data: { code } } })
+  assert.equal(apiAuthAction(err(401, 'auth_invalid')), 'refresh')
+  assert.equal(apiAuthAction(err(401, 'auth_required')), 'refresh')
+  assert.equal(apiAuthAction(err(401, 'auth_invalid'), { alreadyRetried: true }), 'signout')
+  assert.equal(apiAuthAction(err(403, 'auth_forbidden')), 'denied')
+  // outros 401/403/503 e erros sem resposta seguem o fluxo normal
+  assert.equal(apiAuthAction(err(401, undefined)), null)
+  assert.equal(apiAuthAction(err(403, 'outra_coisa')), null)
+  assert.equal(apiAuthAction(err(503, 'auth_unavailable')), null)
+  assert.equal(apiAuthAction({ code: 'ERR_NETWORK' }), null)
+  assert.equal(apiAuthAction(undefined), null)
+})

@@ -93,10 +93,24 @@ Variáveis do front (em `frontend/.env`, lidas pelo Vite):
 
 Limites que valem conhecer:
 
-- **É uma tela de entrada, não autorização.** O backend do Noma não valida o token; quem chamar a API diretamente continua passando. Para proteger a API é preciso validar o token no backend (`GET /auth/me`).
+- O login sozinho não autoriza ninguém: o `register` do Orbit é público. Quem decide é o **backend**, que confere o token e a lista de emails permitidos (próxima seção).
 - O `register` do Orbit é público: qualquer pessoa que conheça a URL cria conta. Se for expor o app, restrinja quem pode se cadastrar.
 - A sessão fica em `localStorage`. Se o Orbit estiver fora do ar, a sessão salva continua valendo; só um `401` descarta a sessão.
 - Com o login por email ativado, o app **não emite mais token de app**. O espelho de estado (abaixo) entra com um **usuário de serviço** (email e senha), que renova a sessão sozinho.
+
+### Proteção da API (backend)
+
+Todas as rotas `/api/*` exigem `Authorization: Bearer <token>`. O backend não consegue verificar o JWT sozinho (o segredo fica no Orbit), então pergunta ao Orbit quem é o dono do token (`GET /{app}/auth/me`) e só deixa passar emails da lista de permitidos. `OPTIONS` (preflight do CORS) e `/health` ficam abertos.
+
+| Variável | Para que serve |
+|---|---|
+| `API_AUTH_REQUIRED` | Liga a proteção. Padrão `true`. Use `false` só em desenvolvimento local e **junto** com `VITE_AUTH_REQUIRED=false` no front: valores diferentes quebram o app. |
+| `API_ALLOWED_EMAILS` | Emails (separados por vírgula) que podem usar o backend. **Obrigatória** com a proteção ligada: o backend não sobe sem ela (falha fechada). Fica no `.env`, não no repositório. |
+| `API_AUTH_CACHE_TTL_SECONDS` | Por quanto tempo uma resposta do Orbit vale (padrão `60`). Evita uma ida ao Orbit por requisição. |
+
+Respostas: `401` sem token ou com token inválido/expirado, `403` se o login é válido mas o email não está na lista, e `503` se o Orbit não responde (sem o Orbit não há como confirmar quem é, então **o app não funciona enquanto o Orbit estiver fora do ar**). O token nunca vai para o log e o cache guarda só o hash.
+
+No front, o axios anexa o token, renova a sessão uma vez ao receber `401` e repete a chamada; em `403` encerra a sessão e mostra o aviso de acesso negado.
 
 ### Estado durável no Zeep Orbit (opcional)
 
@@ -107,7 +121,7 @@ Espelha **tarefas** e **checkpoints de etapas** (hoje, o build do grafo) em tabe
 | `ORBIT_BASE_URL` | URL da instância, **sem** `/{app}` no final (por exemplo, `https://orbit.dlec.app`). |
 | `ORBIT_APP` | Nome do app (padrão `mirofish`). |
 | `ORBIT_SERVICE_EMAIL`, `ORBIT_SERVICE_PASSWORD` | Usuário de serviço do backend (uma conta criada no app, pela tela `/auth`). **Modo recomendado**: o backend faz login e renova a sessão com o refresh token. |
-| `ORBIT_API_TOKEN` | Fallback legado: um token de app já emitido. **Não é renovável** e, em app com login por email, não dá para emitir outro. Não use um PAT pessoal. |
+| `ORBIT_API_TOKEN` | **Obsoleto.** Era um token de app; com o RLS `owner` ele não tem dono e o Orbit responde `500`. Use o usuário de serviço. Não use um PAT pessoal. |
 | `ORBIT_ORPHAN_GRACE_SECONDS` | Ao subir, tarefas ativas no Orbit sem atualização há mais de N segundos viram `failed (interrupted)`. `0` (padrão) assume um único backend por app. |
 
 Como funciona:
@@ -117,7 +131,7 @@ Como funciona:
 - A sessão do usuário de serviço fica só em memória. Ao receber `401`, o cliente renova com `POST /{app}/auth/refresh` e, se o refresh token também não valer mais, faz um novo login. Se o login falhar (senha errada, Orbit fora do ar), ele espera 60 s antes de tentar de novo e as gravações são descartadas com aviso no log, sem afetar o app.
 - As tarefas **não** são recarregadas do Orbit para a memória: uma tarefa `processing` restaurada pareceria um build ativo e atrapalharia a retomada existente.
 
-Tabelas do app (RLS desligada por enquanto, então qualquer usuário autenticado do app lê e grava; veja os limites acima):
+Tabelas do app (RLS em modo `owner`: cada linha só é visível, alterável e apagável por quem a criou, então outra conta cadastrada não enxerga nem sobrescreve o que o backend grava):
 
 - `tasks`: `task_id` (único), `task_type`, `status`, `progress`, `message`, `result`, `error`, `metadata`, `progress_detail` (jsonb), `project_id`, `task_created_at`, `task_updated_at`.
 - `steps`: `entity_type`, `entity_id`, `step`, `status`, `seq`, `payload` (jsonb), `error`, `started_at`, `finished_at`, com índice único em `(entity_type, entity_id, step)`.

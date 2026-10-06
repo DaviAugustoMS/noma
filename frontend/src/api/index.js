@@ -1,5 +1,7 @@
 import axios from 'axios'
 import i18n from '../i18n'
+import { AUTH_REQUIRED, authState, refreshSession, signOut } from '../store/auth'
+import { apiAuthAction } from '../lib/authRules'
 
 // 创建axios实例
 const service = axios.create({
@@ -14,6 +16,8 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     config.headers['Accept-Language'] = i18n.global.locale.value
+    // O backend valida o token no Orbit; sem sessão a chamada segue sem cabeçalho.
+    if (authState.token) config.headers.Authorization = `Bearer ${authState.token}`
     return config
   },
   error => {
@@ -35,7 +39,23 @@ service.interceptors.response.use(
     
     return res
   },
-  error => {
+  async error => {
+    if (AUTH_REQUIRED) {
+      const config = error.config
+      const action = apiAuthAction(error, { alreadyRetried: !!config?._authRetried })
+      if (action === 'refresh' && (await refreshSession())) {
+        config._authRetried = true
+        config.headers.Authorization = `Bearer ${authState.token}`
+        return service(config)
+      }
+      if (action === 'refresh' || action === 'signout' || action === 'denied') {
+        await signOut()
+        // import dinâmico: o router importa as views, que importam este módulo
+        const { default: router } = await import('../router')
+        const query = action === 'denied' ? { denied: '1' } : { redirect: router.currentRoute.value.fullPath }
+        router.replace({ name: 'Auth', query })
+      }
+    }
     console.error('Response error:', error)
     const apiError = error.response?.data?.error || error.response?.data?.message
     

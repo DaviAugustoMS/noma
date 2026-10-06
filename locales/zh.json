@@ -64,6 +64,7 @@
       "invalid": "数据无效，请检查邮箱和密码。",
       "rateLimited": "尝试次数过多，请稍后再试。",
       "network": "无法连接登录服务器，请检查网络。",
+      "denied": "该账号没有使用 Noma 的权限，请使用其他账号登录。",
       "unknown": "出错了，请重试。"
     }
   },
@@ -434,6 +435,10 @@
     "unknownFile": "未知文件"
   },
   "err": {
+    "authRequired": "请先登录后再使用 Noma。",
+    "authInvalid": "会话无效或已过期，请重新登录。",
+    "authForbidden": "该账号没有使用 Noma 的权限。",
+    "authUnavailable": "暂时无法验证登录（登录服务不可用），请稍后重试。",
     "simNotFound": "模拟不存在: {id}",
     "simConfigMissingPrepare": "模拟配置不存在，请先调用 /prepare 接口",
     "simAlreadyRunning": "模拟已在运行或结束处理中: {id}",

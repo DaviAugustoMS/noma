@@ -10,7 +10,7 @@ import warnings
 # 需要在所有其他导入之前设置
 warnings.filterwarnings("ignore", message=".*resource_tracker.*")
 
-from flask import Flask, jsonify, request
+from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 
@@ -70,6 +70,25 @@ def create_app(config_class=Config):
 
             threading.Thread(target=_reconcile_orphans, daemon=True,
                              name="StateStoreReconcile").start()
+
+    # Proteção da API: exige o token do usuário (validado no Orbit) em /api/*.
+    # OPTIONS passa (preflight do CORS não leva credenciais) e /health fica aberto.
+    @app.before_request
+    def require_api_auth():
+        if not app.config.get('API_AUTH_REQUIRED', Config.API_AUTH_REQUIRED):
+            return None
+        if request.method == 'OPTIONS' or not request.path.startswith('/api/'):
+            return None
+        from .utils.api_auth import AuthFailure, authenticate
+        try:
+            g.current_user_email = authenticate(request.headers.get('Authorization'))
+        except AuthFailure as failure:
+            response = jsonify({"success": False, "error": failure.message, "code": failure.code})
+            response.status_code = failure.status
+            if failure.status == 401:
+                response.headers['WWW-Authenticate'] = 'Bearer'
+            return response
+        return None
 
     # 请求日志中间件
     @app.before_request

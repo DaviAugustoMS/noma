@@ -47,6 +47,16 @@ class Config:
     # Ao subir, tarefas ativas no Orbit sem atualização há mais de N segundos
     # viram "failed (interrupted)". 0 = sempre (um único backend por app).
     ORBIT_ORPHAN_GRACE_SECONDS = int(os.environ.get('ORBIT_ORPHAN_GRACE_SECONDS', '0'))
+
+    # Proteção das rotas /api/*: valida o token do usuário no Orbit (GET /auth/me) e
+    # só deixa passar emails da lista. Ligada por padrão; use API_AUTH_REQUIRED=false
+    # em desenvolvimento local (e VITE_AUTH_REQUIRED=false no front, os dois juntos).
+    API_AUTH_REQUIRED = os.environ.get('API_AUTH_REQUIRED', 'true').strip().lower() != 'false'
+    API_ALLOWED_EMAILS = tuple(
+        e.strip().lower() for e in os.environ.get('API_ALLOWED_EMAILS', '').split(',') if e.strip()
+    )
+    API_AUTH_CACHE_TTL_SECONDS = int(os.environ.get('API_AUTH_CACHE_TTL_SECONDS', '60'))
+    API_AUTH_CACHE_MAX = int(os.environ.get('API_AUTH_CACHE_MAX', '256'))
     
     # 文件上传配置
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
@@ -92,4 +102,7 @@ class Config:
         if cls.DEBUG:
             import warnings
             warnings.warn("Flask DEBUG mode is enabled. Do not use in production.", RuntimeWarning)
+        from .utils.api_auth import config_errors
+
+        errors.extend(config_errors())
         return errors

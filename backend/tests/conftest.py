@@ -39,3 +39,17 @@ def _isolate_orbit_state_store(monkeypatch):
     state_store.reset_state_store(NullStateStore())
     yield
     state_store.reset_state_store(None)
+
+
+# A proteção da API vem ligada por padrão. Os testes de rotas existentes não enviam
+# token, então ela começa desligada em todo teste; test_api_auth.py liga o que precisa.
+@pytest.fixture(autouse=True)
+def _api_auth_off_by_default(monkeypatch):
+    from app.config import Config
+    from app.utils import api_auth
+
+    monkeypatch.setattr(Config, "API_AUTH_REQUIRED", False)
+    monkeypatch.setattr(Config, "API_ALLOWED_EMAILS", ())
+    api_auth.reset_for_tests(None)
+    yield
+    api_auth.reset_for_tests(None)

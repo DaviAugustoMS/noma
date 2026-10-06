@@ -64,6 +64,7 @@
       "invalid": "Invalid data. Check the email and password.",
       "rateLimited": "Too many attempts. Wait a moment and try again.",
       "network": "Could not reach the sign-in server. Check your connection.",
+      "denied": "This account is not allowed to use Noma. Sign in with another account.",
       "unknown": "Something went wrong. Please try again."
     }
   },
@@ -434,6 +435,10 @@
     "unknownFile": "Unknown file"
   },
   "err": {
+    "authRequired": "Sign in to use Noma.",
+    "authInvalid": "Invalid or expired session. Sign in again.",
+    "authForbidden": "This account is not allowed to use Noma.",
+    "authUnavailable": "Could not verify the sign-in right now (login server unavailable). Try again shortly.",
     "simNotFound": "Simulation not found: {id}",
     "simConfigMissingPrepare": "Simulation config not found; call /prepare first.",
     "simAlreadyRunning": "The simulation is already running or being finalized: {id}",

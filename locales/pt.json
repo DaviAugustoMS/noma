@@ -64,6 +64,7 @@
       "invalid": "Dados inválidos. Confira o email e a senha.",
       "rateLimited": "Muitas tentativas. Aguarde um pouco e tente de novo.",
       "network": "Não foi possível falar com o servidor de login. Verifique a conexão.",
+      "denied": "Esta conta não tem permissão para usar o Noma. Entre com outra conta.",
       "unknown": "Algo deu errado. Tente novamente."
     }
   },
@@ -434,6 +435,10 @@
     "unknownFile": "Arquivo desconhecido"
   },
   "err": {
+    "authRequired": "Faça login para usar o Noma.",
+    "authInvalid": "Sessão inválida ou expirada. Entre novamente.",
+    "authForbidden": "Esta conta não tem permissão para usar o Noma.",
+    "authUnavailable": "Não foi possível confirmar o login agora (servidor de login indisponível). Tente de novo em instantes.",
     "simNotFound": "Simulação não encontrada: {id}",
     "simConfigMissingPrepare": "Configuração da simulação não encontrada; chame /prepare antes.",
     "simAlreadyRunning": "A simulação já está em execução ou sendo finalizada: {id}",

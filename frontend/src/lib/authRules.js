@@ -64,3 +64,21 @@ export function safeRedirect(target, fallback = '/') {
   if (target === '/auth' || target.startsWith('/auth?')) return fallback
   return target
 }
+
+/**
+ * O que fazer com um erro de uma chamada ao backend do Noma.
+ * Só reage aos códigos que o guard do backend devolve; qualquer outro 401/403
+ * (de uma rota, de outra causa) segue o fluxo normal de erro.
+ *  - 'refresh': token recusado -> renovar a sessão e repetir a chamada (uma vez);
+ *  - 'signout': já renovamos e continua recusado -> encerrar a sessão;
+ *  - 'denied': login válido, mas a conta não está na lista de permitidos.
+ */
+export function apiAuthAction(error, { alreadyRetried = false } = {}) {
+  const status = error?.response?.status
+  const code = error?.response?.data?.code
+  if (status === 401 && (code === 'auth_invalid' || code === 'auth_required')) {
+    return alreadyRetried ? 'signout' : 'refresh'
+  }
+  if (status === 403 && code === 'auth_forbidden') return 'denied'
+  return null
+}

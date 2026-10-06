@@ -100,7 +100,7 @@ const { t } = useI18n()
 const mode = ref(route.query.mode === 'register' ? 'register' : 'login')
 const form = reactive({ name: '', email: '', password: '', confirm: '' })
 const errors = ref({})
-const formError = ref('')
+const formError = ref(route.query.denied ? t('auth.errors.denied') : '')
 const loading = ref(false)
 
 const fieldError = (field) => {
