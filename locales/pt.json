@@ -64,6 +64,7 @@
       "invalid": "Dados inválidos. Confira o email e a senha.",
       "rateLimited": "Muitas tentativas. Aguarde um pouco e tente de novo.",
       "network": "Não foi possível falar com o servidor de login. Verifique a conexão.",
+      "deniedFor": "A conta {email} entrou, mas não tem permissão para usar o Noma. Peça para liberar este email ou entre com outra conta.",
       "denied": "Esta conta não tem permissão para usar o Noma. Entre com outra conta.",
       "unknown": "Algo deu errado. Tente novamente."
     }

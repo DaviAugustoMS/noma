@@ -64,6 +64,7 @@
       "invalid": "Invalid data. Check the email and password.",
       "rateLimited": "Too many attempts. Wait a moment and try again.",
       "network": "Could not reach the sign-in server. Check your connection.",
+      "deniedFor": "The account {email} signed in but is not allowed to use Noma. Ask for this email to be allowed, or sign in with another account.",
       "denied": "This account is not allowed to use Noma. Sign in with another account.",
       "unknown": "Something went wrong. Please try again."
     }

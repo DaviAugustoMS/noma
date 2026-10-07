@@ -90,7 +90,7 @@ import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
-import { signIn, signUp } from '../store/auth'
+import { deniedAccount, signIn, signUp } from '../store/auth'
 import { authErrorKey, safeRedirect, validateAuthForm } from '../lib/authRules'
 
 const route = useRoute()
@@ -100,7 +100,11 @@ const { t } = useI18n()
 const mode = ref(route.query.mode === 'register' ? 'register' : 'login')
 const form = reactive({ name: '', email: '', password: '', confirm: '' })
 const errors = ref({})
-const formError = ref(route.query.denied ? t('auth.errors.denied') : '')
+const deniedMessage = () =>
+  deniedAccount.email
+    ? t('auth.errors.deniedFor', { email: deniedAccount.email })
+    : t('auth.errors.denied')
+const formError = ref(route.query.denied ? deniedMessage() : '')
 const loading = ref(false)
 
 const fieldError = (field) => {

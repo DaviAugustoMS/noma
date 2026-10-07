@@ -1,6 +1,6 @@
 import axios from 'axios'
 import i18n from '../i18n'
-import { AUTH_REQUIRED, authState, refreshSession, signOut } from '../store/auth'
+import { AUTH_REQUIRED, authState, deniedAccount, refreshSession, signOut } from '../store/auth'
 import { apiAuthAction } from '../lib/authRules'
 
 // Cria a instância do axios
@@ -49,6 +49,9 @@ service.interceptors.response.use(
         return service(config)
       }
       if (action === 'refresh' || action === 'signout' || action === 'denied') {
+        // Várias chamadas recebem 403 juntas: só a primeira ainda vê o usuário (as outras
+        // chegam depois do signOut), então nunca sobrescrevemos o email com vazio.
+        if (action === 'denied' && authState.user?.email) deniedAccount.email = authState.user.email
         await signOut()
         // import dinâmico: o router importa as views, que importam este módulo
         const { default: router } = await import('../router')

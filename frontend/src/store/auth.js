@@ -54,6 +54,10 @@ if (saved?.token) {
 }
 
 export const authState = state
+
+// Conta que o backend recusou (login válido, email fora da lista). Fica só em memória:
+// a tela de login mostra qual conta foi negada, sem colocar o email na URL.
+export const deniedAccount = reactive({ email: '' })
 export const isAuthenticated = computed(() => !!state.token)
 
 function setTokens({ token, refresh_token: refreshToken }) {
@@ -77,6 +81,7 @@ export async function signIn({ email, password }) {
     state.user = { id: '', email: normalizeEmail(email), name: '' }
   }
   persist()
+  deniedAccount.email = '' // login novo: o aviso de acesso negado anterior não vale mais
   restorePromise = Promise.resolve(true) // acabamos de confirmar a sessão
 }
 
