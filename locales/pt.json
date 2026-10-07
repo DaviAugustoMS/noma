@@ -697,6 +697,8 @@
     "setMaxRounds": "Máximo de rodadas da simulação definido para: {rounds}",
     "graphMemoryUpdateEnabled": "Atualização dinâmica da memória do grafo ativada",
     "oldSimCleared": "✓ Logs da simulação anterior apagados, reiniciando a simulação",
+    "reattached": "✓ Simulação já em andamento (rodada {round}/{total}): reconectado sem reiniciar",
+    "reattachedCompleted": "✓ Simulação já concluída: reconectado sem reiniciar",
     "engineStarted": "✓ Motor de simulação iniciado com sucesso",
     "startFailed": "✗ Falha ao iniciar: {error}",
     "startException": "✗ Erro ao iniciar: {error}",

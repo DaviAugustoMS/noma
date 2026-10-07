@@ -697,6 +697,8 @@
     "setMaxRounds": "设置最大模拟轮数: {rounds}",
     "graphMemoryUpdateEnabled": "已开启动态图谱更新模式",
     "oldSimCleared": "✓ 已清理旧的模拟日志，重新开始模拟",
+    "reattached": "✓ 模拟已在运行（第 {round}/{total} 轮）：已重新连接，未重启",
+    "reattachedCompleted": "✓ 模拟已完成：已重新连接，未重启",
     "engineStarted": "✓ 模拟引擎启动成功",
     "startFailed": "✗ 启动失败: {error}",
     "startException": "✗ 启动异常: {error}",

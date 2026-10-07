@@ -688,9 +688,42 @@ watch(() => props.systemLogs?.length, () => {
   })
 })
 
-onMounted(() => {
+// Recarregar a página (ou o Mac voltar do repouso e a aba recarregar) não pode reiniciar uma
+// simulação em andamento: o início usa force=true e apagaria todo o progresso. Antes de iniciar,
+// consulta o estado e, se já estiver rodando ou concluída, só reconecta.
+const RUNNING_STATES = ['starting', 'running', 'paused', 'stopping']
+
+const attachToExistingRun = async () => {
+  try {
+    const res = await getRunStatus(props.simulationId)
+    const data = res?.success ? res.data : null
+    const status = data?.runner_status
+    if (RUNNING_STATES.includes(status)) {
+      addLog(t('log.reattached', { round: data.current_round || 0, total: data.total_rounds || 0 }))
+      phase.value = 1
+      runStatus.value = data
+      prevTwitterRound.value = data.twitter_current_round || 0
+      prevRedditRound.value = data.reddit_current_round || 0
+      emit('update-status', 'processing')
+      startStatusPolling()
+      startDetailPolling()
+      return true
+    }
+    if (status === 'completed') {
+      addLog(t('log.reattachedCompleted'))
+      await fetchRunStatus() // marca a fase como concluída e libera o relatório
+      await fetchRunStatusDetail()
+      return true
+    }
+  } catch {
+    // Sem resposta: segue para o início normal.
+  }
+  return false
+}
+
+onMounted(async () => {
   addLog(t('log.step3Init'))
-  if (props.simulationId) {
+  if (props.simulationId && !(await attachToExistingRun())) {
     doStartSimulation()
   }
 })

@@ -697,6 +697,8 @@
     "setMaxRounds": "Max simulation rounds set to: {rounds}",
     "graphMemoryUpdateEnabled": "Dynamic graph memory update enabled",
     "oldSimCleared": "✓ Old simulation logs cleared, restarting simulation",
+    "reattached": "✓ Simulation already running (round {round}/{total}): reconnected without restarting",
+    "reattachedCompleted": "✓ Simulation already completed: reconnected without restarting",
     "engineStarted": "✓ Simulation engine started successfully",
     "startFailed": "✗ Start failed: {error}",
     "startException": "✗ Start error: {error}",
