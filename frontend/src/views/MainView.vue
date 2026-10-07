@@ -21,6 +21,7 @@
       </div>
 
       <div class="header-right">
+        <UsageBadge v-if="currentProjectId && currentProjectId !== 'new'" :project-id="currentProjectId" />
         <LanguageSwitcher />
         <div class="step-divider"></div>
         <PipelineRail :step="currentStep" />
@@ -102,6 +103,7 @@ import Step2EnvSetup from '../components/Step2EnvSetup.vue'
 import { generateOntology, retryOntology, getProject, buildGraph, getTaskStatus, getGraphData } from '../api/graph'
 import { getPendingUpload, clearPendingUpload } from '../store/pendingUpload'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import UsageBadge from '../components/UsageBadge.vue'
 import PipelineRail from '../components/PipelineRail.vue'
 
 const route = useRoute()
@@ -226,6 +228,9 @@ const handleNewProject = async () => {
     const formData = new FormData()
     pending.files.forEach(f => formData.append('files', f))
     formData.append('simulation_requirement', pending.simulationRequirement)
+    if (pending.seedUsage && pending.seedUsage.calls > 0) {
+      formData.append('seed_usage', JSON.stringify(pending.seedUsage))
+    }
     
     const res = await generateOntology(formData)
     if (res.success) {

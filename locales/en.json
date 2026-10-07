@@ -69,6 +69,7 @@
       "unknown": "Something went wrong. Please try again."
     }
   },
+  "usage": {"tokens":"tokens","hint":"LLM token usage","input":"Input","output":"Output","calls":"Calls","thisProject":"This project","allProjects":"Total across all projects","estimated":"{n} call(s) without provider counts were estimated.","error":"Could not refresh right now.","stage":{"seed":"Seed (website)","ontology":"Ontology","prepare":"Environment setup","simulation":"Simulation","report":"Report","chat":"Report chat","interviews":"Interviews","other":"Other"}},
   "home": {
     "siteLabel": "Generate from a website",
     "sitePlaceholder": "https://company.com",

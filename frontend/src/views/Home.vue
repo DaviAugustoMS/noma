@@ -16,6 +16,7 @@
           <span class="health-dot"></span>
           <span class="health-text">{{ healthMessage }}</span>
         </div>
+        <UsageBadge />
         <UserMenu />
         <LanguageSwitcher />
         <a href="https://github.com/DaviAugustoMS/noma" target="_blank" rel="noopener" class="github-link">
@@ -265,6 +266,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import UsageBadge from '../components/UsageBadge.vue'
 import UserMenu from '../components/UserMenu.vue'
 import { getSystemCheck } from '../api/system'
 import { generateSeedFromUrl } from '../api/graph'
@@ -339,6 +341,7 @@ const siteUrl = ref('')
 const siteLoading = ref(false)
 const siteError = ref('')
 const siteDone = ref(false)
+const seedUsage = { prompt_tokens: 0, completion_tokens: 0, calls: 0 } // gasto da semente, enviado junto ao projeto
 
 const hostSlug = (value) => {
   try {
@@ -356,7 +359,12 @@ const generateFromSite = async () => {
   siteDone.value = false
   try {
     const res = await generateSeedFromUrl(siteUrl.value.trim())
-    const { seed_markdown: seed, simulation_requirement: requirement } = res.data
+    const { seed_markdown: seed, simulation_requirement: requirement, usage: spent } = res.data
+    if (spent) {
+      seedUsage.prompt_tokens += spent.prompt_tokens || 0
+      seedUsage.completion_tokens += spent.completion_tokens || 0
+      seedUsage.calls += spent.calls || 0
+    }
     const name = `semente-${hostSlug(siteUrl.value.trim())}.md`
     // Substitui a semente gerada antes para o mesmo site; arquivos enviados à mão ficam
     files.value = files.value.filter((f) => f.name !== name)
@@ -390,7 +398,7 @@ const startSimulation = () => {
 
   // Armazena os dados pendentes de upload
   import('../store/pendingUpload.js').then(({ setPendingUpload }) => {
-    setPendingUpload(files.value, formData.value.simulationRequirement)
+    setPendingUpload(files.value, formData.value.simulationRequirement, { ...seedUsage })
 
     // Redireciona imediatamente para a página Process (usando um identificador especial para indicar novo projeto)
     router.push({

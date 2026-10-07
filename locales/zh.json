@@ -69,6 +69,7 @@
       "unknown": "出错了，请重试。"
     }
   },
+  "usage": {"tokens":"tokens","hint":"LLM token 用量","input":"输入","output":"输出","calls":"调用次数","thisProject":"当前项目","allProjects":"所有项目合计","estimated":"{n} 次调用缺少服务商计数，已估算。","error":"暂时无法刷新。","stage":{"seed":"种子（网站）","ontology":"本体","prepare":"环境准备","simulation":"模拟","report":"报告","chat":"报告对话","interviews":"访谈","other":"其他"}},
   "home": {
     "siteLabel": "从网站生成",
     "sitePlaceholder": "https://company.com",

@@ -69,6 +69,7 @@
       "unknown": "Algo deu errado. Tente novamente."
     }
   },
+  "usage": {"tokens":"tokens","hint":"Gasto de tokens do LLM","input":"Entrada","output":"Saída","calls":"Chamadas","thisProject":"Este projeto","allProjects":"Total de todos os projetos","estimated":"{n} chamada(s) sem contagem do provedor foram estimadas.","error":"Não foi possível atualizar agora.","stage":{"seed":"Semente (site)","ontology":"Ontologia","prepare":"Preparo do ambiente","simulation":"Simulação","report":"Relatório","chat":"Conversa com o relatório","interviews":"Entrevistas","other":"Outros"}},
   "home": {
     "siteLabel": "Gerar a partir de um site",
     "sitePlaceholder": "https://empresa.com.br",

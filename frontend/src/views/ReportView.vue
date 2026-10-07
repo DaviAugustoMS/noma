@@ -21,6 +21,7 @@
       </div>
 
       <div class="header-right">
+        <UsageBadge :report-id="reportId" />
         <LanguageSwitcher />
         <div class="step-divider"></div>
         <PipelineRail :step="4" />
@@ -88,6 +89,7 @@ import { getProject, getGraphData } from '../api/graph'
 import { getSimulation } from '../api/simulation'
 import { getReport, generateReport } from '../api/report'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import UsageBadge from '../components/UsageBadge.vue'
 import PipelineRail from '../components/PipelineRail.vue'
 
 const route = useRoute()

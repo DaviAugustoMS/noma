@@ -21,6 +21,7 @@
       </div>
 
       <div class="header-right">
+        <UsageBadge :simulation-id="simulationId" />
         <LanguageSwitcher />
         <div class="step-divider"></div>
         <PipelineRail :step="2" />
@@ -75,6 +76,7 @@ import Step2EnvSetup from '../components/Step2EnvSetup.vue'
 import { getProject, getGraphData } from '../api/graph'
 import { getSimulation, stopSimulation, getEnvStatus, closeSimulationEnv } from '../api/simulation'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import UsageBadge from '../components/UsageBadge.vue'
 import PipelineRail from '../components/PipelineRail.vue'
 import { useI18n } from 'vue-i18n'
 
