@@ -21,6 +21,7 @@ from ..services.state_store import (
 )
 from ..services.graph_builder import BatchSubmission, GraphBuilderService
 from ..services.text_processor import TextProcessor
+from ..services import site_seed
 from ..utils.file_parser import FileParser
 from ..utils.logger import get_logger
 from ..utils.locale import t, get_locale, set_locale
@@ -130,6 +131,27 @@ def allowed_file(filename: str) -> bool:
         return False
     ext = os.path.splitext(filename)[1].lower().lstrip('.')
     return ext in Config.ALLOWED_EXTENSIONS
+
+
+@graph_bp.route('/seed/from-url', methods=['POST'])
+def seed_from_url():
+    """Gera a semente (Markdown) e o prompt de simulação a partir do link de um site.
+
+    Corpo JSON: ``{"url": "https://..."}``. Devolve ``title``, ``seed_markdown`` e
+    ``simulation_requirement`` no idioma escolhido; nada é salvo no servidor.
+    """
+    payload = request.get_json(silent=True) or {}
+    try:
+        data = site_seed.generate_from_url(str(payload.get('url', '')))
+    except site_seed.SiteSeedError as error:
+        return jsonify({"success": False, "code": error.code, "error": t(f"err.{error.code}")}), error.status
+    except LLMResponseError as error:
+        logger.warning("Geração da semente pelo site falhou: %s", error)
+        return jsonify({"success": False, "code": "siteGenerationFailed", "error": t("err.siteGenerationFailed")}), 502
+    except Exception:
+        logger.exception("Erro inesperado ao gerar a semente pelo site")
+        return jsonify({"success": False, "code": "siteGenerationFailed", "error": t("err.siteGenerationFailed")}), 500
+    return jsonify({"success": True, "data": data})
 
 
 # ============== Interfaces de gerenciamento de projeto ==============
