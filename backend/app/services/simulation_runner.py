@@ -238,6 +238,8 @@ class SimulationRunner:
     _finalization_locks: Dict[str, threading.Lock] = {}
     _finalization_locks_guard = threading.Lock()
     _manual_stop_requests: set[str] = set()
+    # Simulações cujo estado final já foi publicado enquanto o processo segue vivo (modo de espera de comandos).
+    _completed_early: set[str] = set()
 
     @classmethod
     def _finalization_lock(cls, simulation_id: str) -> threading.Lock:
@@ -652,6 +654,14 @@ class SimulationRunner:
                         reddit_actions_log, reddit_position, state, "reddit"
                     )
                 
+                # O processo fica vivo no modo de espera (entrevistas) depois da simulação, então a
+                # conclusão não pode depender da saída dele: publica quando todas as plataformas terminam.
+                if (
+                    simulation_id not in cls._completed_early
+                    and cls._check_all_platforms_completed(state)
+                ):
+                    cls._publish_completion(simulation_id, state)
+
                 # Atualiza o estado
                 cls._save_run_state(state)
                 time.sleep(2)
@@ -677,7 +687,12 @@ class SimulationRunner:
                 if latest_state is not None:
                     state = latest_state
 
-                if state.runner_status not in {
+                already_published = (
+                    simulation_id in cls._completed_early
+                    and simulation_id not in cls._manual_stop_requests
+                    and monitor_error is None
+                )
+                if not already_published and state.runner_status not in {
                     RunnerStatus.STOPPED,
                     RunnerStatus.FAILED,
                 }:
@@ -745,6 +760,7 @@ class SimulationRunner:
                         logger.error(f"Falha na simulação: {simulation_id}, error={state.error}")
                 cls._manual_stop_requests.discard(simulation_id)
             
+            cls._completed_early.discard(simulation_id)
             # Limpa os recursos do processo
             cls._processes.pop(simulation_id, None)
             cls._action_queues.pop(simulation_id, None)
@@ -879,6 +895,51 @@ class SimulationRunner:
             logger.warning(f"Falha ao ler o log de ações: {log_path}, error={e}")
             return position
     
+    @classmethod
+    def _publish_completion(cls, simulation_id: str, state: SimulationRunState) -> None:
+        """Publica COMPLETED quando todas as plataformas terminaram, sem esperar o processo sair.
+
+        Mantém a barreira de ingestão: o estado passa por STOPPING até o atualizador de memória do
+        grafo esvaziar a fila; se isso falhar, o resultado é FAILED. O processo continua vivo para
+        aceitar entrevistas; o monitor só limpa os recursos quando ele sair.
+        """
+
+        with cls._finalization_lock(simulation_id):
+            latest = cls.get_run_state(simulation_id)
+            if latest is not None:
+                state = latest
+            if (
+                simulation_id in cls._completed_early
+                or simulation_id in cls._manual_stop_requests
+                or state.runner_status in {RunnerStatus.STOPPED, RunnerStatus.FAILED, RunnerStatus.COMPLETED}
+            ):
+                return
+            desired_status = RunnerStatus.COMPLETED
+            error_message = None
+            state.twitter_running = False
+            state.reddit_running = False
+            if cls._graph_memory_enabled.get(simulation_id, False):
+                state.runner_status = RunnerStatus.STOPPING
+                cls._save_run_state(state)
+                cls._sync_simulation_status(simulation_id, RunnerStatus.STOPPING)
+                try:
+                    ZepGraphMemoryManager.stop_updater(simulation_id)
+                    cls._graph_memory_enabled.pop(simulation_id, None)
+                except Exception as error:
+                    logger.error(f"Falha ao parar o atualizador de memória do grafo: {error}")
+                    desired_status = RunnerStatus.FAILED
+                    error_message = t('err.zepWriteIncomplete', error=error)
+            state.runner_status = desired_status
+            state.error = error_message
+            state.completed_at = datetime.now().isoformat()
+            cls._save_run_state(state)
+            cls._sync_simulation_status(simulation_id, desired_status, error_message)
+            cls._completed_early.add(simulation_id)
+            if desired_status == RunnerStatus.COMPLETED:
+                logger.info(f"Simulação concluída (processo segue em modo de espera): {simulation_id}")
+            else:
+                logger.error(f"Falha na simulação: {simulation_id}, error={error_message}")
+
     @classmethod
     def _check_all_platforms_completed(cls, state: SimulationRunState) -> bool:
         """
