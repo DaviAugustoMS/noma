@@ -138,6 +138,30 @@
           >
             <div class="console-glare" aria-hidden="true"></div>
 
+            <!-- Gerar semente e prompt a partir do link de um site -->
+            <div class="console-section">
+              <div class="console-header">
+                <span class="console-label">{{ $t('home.siteLabel') }}</span>
+              </div>
+              <form class="site-row" @submit.prevent="generateFromSite">
+                <input
+                  v-model="siteUrl"
+                  class="site-input"
+                  type="url"
+                  inputmode="url"
+                  autocomplete="off"
+                  spellcheck="false"
+                  :placeholder="$t('home.sitePlaceholder')"
+                  :disabled="loading || siteLoading"
+                />
+                <button class="site-btn" type="submit" :disabled="!siteUrl.trim() || loading || siteLoading">
+                  {{ siteLoading ? $t('home.siteLoading') : $t('home.siteButton') }}
+                </button>
+              </form>
+              <p v-if="siteError" class="site-msg site-error" role="alert">{{ siteError }}</p>
+              <p v-else-if="siteDone" class="site-msg" role="status">{{ $t('home.siteDone') }}</p>
+            </div>
+
             <!-- Área de upload -->
             <div class="console-section">
               <div class="console-header">
@@ -243,6 +267,7 @@ import HistoryDatabase from '../components/HistoryDatabase.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import UserMenu from '../components/UserMenu.vue'
 import { getSystemCheck } from '../api/system'
+import { generateSeedFromUrl } from '../api/graph'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -307,6 +332,43 @@ const addFiles = (newFiles) => {
     return ['pdf', 'md', 'txt'].includes(ext)
   })
   files.value.push(...validFiles)
+}
+
+// Gerar semente e prompt a partir do link de um site
+const siteUrl = ref('')
+const siteLoading = ref(false)
+const siteError = ref('')
+const siteDone = ref(false)
+
+const hostSlug = (value) => {
+  try {
+    const host = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`).hostname
+    return host.replace(/^www\./, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'site'
+  } catch {
+    return 'site'
+  }
+}
+
+const generateFromSite = async () => {
+  if (siteLoading.value || loading.value) return
+  siteLoading.value = true
+  siteError.value = ''
+  siteDone.value = false
+  try {
+    const res = await generateSeedFromUrl(siteUrl.value.trim())
+    const { seed_markdown: seed, simulation_requirement: requirement } = res.data
+    const name = `semente-${hostSlug(siteUrl.value.trim())}.md`
+    // Substitui a semente gerada antes para o mesmo site; arquivos enviados à mão ficam
+    files.value = files.value.filter((f) => f.name !== name)
+    files.value.push(new File([seed], name, { type: 'text/markdown' }))
+    formData.value.simulationRequirement = requirement
+    siteDone.value = true
+  } catch (e) {
+    // Não logamos o erro: o objeto do axios carrega a requisição inteira
+    siteError.value = e?.response?.data?.error || e?.message || t('common.error')
+  } finally {
+    siteLoading.value = false
+  }
 }
 
 // Remover arquivo
@@ -1237,6 +1299,73 @@ onBeforeUnmount(() => {
   flex: 1;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--glass-line-strong), transparent);
+}
+
+.site-row {
+  display: flex;
+  gap: 10px;
+}
+
+.site-input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: rgba(2, 11, 20, 0.5);
+  border: 1px solid var(--glass-line);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.4s;
+}
+
+.site-input::placeholder {
+  color: var(--ink-mute);
+}
+
+.site-input:focus {
+  border-color: var(--bio-teal);
+  box-shadow: 0 0 0 3px rgba(25, 227, 196, 0.14);
+}
+
+.site-btn {
+  flex: none;
+  padding: 0 16px;
+  border: 1px solid var(--bio-teal);
+  border-radius: 12px;
+  background: rgba(25, 227, 196, 0.1);
+  color: var(--bio-teal);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site-btn:disabled,
+.site-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.site-msg {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.site-error {
+  color: #ff9d9d;
+}
+
+@media (max-width: 520px) {
+  .site-row {
+    flex-direction: column;
+  }
+  .site-btn {
+    padding: 11px 16px;
+  }
 }
 
 .input-wrapper {

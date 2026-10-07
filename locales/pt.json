@@ -70,6 +70,11 @@
     }
   },
   "home": {
+    "siteLabel": "Gerar a partir de um site",
+    "sitePlaceholder": "https://empresa.com.br",
+    "siteButton": "Gerar semente e prompt",
+    "siteLoading": "Lendo o site...",
+    "siteDone": "Semente e prompt gerados. Revise antes de iniciar.",
     "tagline": "Motor de Inteligência de Enxame, Simples e Universal",
     "version": "/ v0.1-Preview",
     "heroTitle1": "Envie Relatórios,",
@@ -451,6 +456,11 @@
     "authInvalid": "Sessão inválida ou expirada. Entre novamente.",
     "authForbidden": "Esta conta não tem permissão para usar o Noma.",
     "authUnavailable": "Não foi possível confirmar o login agora (servidor de login indisponível). Tente de novo em instantes.",
+    "siteUrlInvalid": "Link inválido. Informe um endereço http(s) completo, por exemplo https://empresa.com.br.",
+    "siteUrlBlocked": "Este endereço não é permitido (só sites públicos nas portas 80/443).",
+    "siteFetchFailed": "Não foi possível abrir o site. Confira o link ou tente novamente.",
+    "siteNoContent": "O site não tem texto suficiente para gerar a semente (pode depender de JavaScript).",
+    "siteGenerationFailed": "Não foi possível gerar a semente agora. Tente novamente.",
     "simNotFound": "Simulação não encontrada: {id}",
     "simConfigMissingPrepare": "Configuração da simulação não encontrada; chame /prepare antes.",
     "simAlreadyRunning": "A simulação já está em execução ou sendo finalizada: {id}",

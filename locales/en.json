@@ -70,6 +70,11 @@
     }
   },
   "home": {
+    "siteLabel": "Generate from a website",
+    "sitePlaceholder": "https://company.com",
+    "siteButton": "Generate seed and prompt",
+    "siteLoading": "Reading the site...",
+    "siteDone": "Seed and prompt generated. Review before starting.",
     "tagline": "Concise & Universal Swarm Intelligence Engine",
     "version": "/ v0.1-Preview",
     "heroTitle1": "Upload Reports,",
@@ -451,6 +456,11 @@
     "authInvalid": "Invalid or expired session. Sign in again.",
     "authForbidden": "This account is not allowed to use Noma.",
     "authUnavailable": "Could not verify the sign-in right now (login server unavailable). Try again shortly.",
+    "siteUrlInvalid": "Invalid link. Enter a full http(s) address, for example https://company.com.",
+    "siteUrlBlocked": "This address is not allowed (public sites on ports 80/443 only).",
+    "siteFetchFailed": "Could not open the site. Check the link or try again.",
+    "siteNoContent": "The site has too little text to generate the seed (it may rely on JavaScript).",
+    "siteGenerationFailed": "Could not generate the seed right now. Try again.",
     "simNotFound": "Simulation not found: {id}",
     "simConfigMissingPrepare": "Simulation config not found; call /prepare first.",
     "simAlreadyRunning": "The simulation is already running or being finalized: {id}",

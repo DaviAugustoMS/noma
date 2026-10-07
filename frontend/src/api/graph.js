@@ -77,3 +77,16 @@ export function getProject(projectId) {
     method: 'get'
   })
 }
+
+/**
+ * Gera a semente (Markdown) e o prompt de simulação a partir do link de um site
+ * @param {string} url
+ * @returns {Promise} data: { url, title, seed_markdown, simulation_requirement }
+ */
+export function generateSeedFromUrl(url) {
+  return service({
+    url: '/api/graph/seed/from-url',
+    method: 'post',
+    data: { url }
+  })
+}

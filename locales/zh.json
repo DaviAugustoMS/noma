@@ -70,6 +70,11 @@
     }
   },
   "home": {
+    "siteLabel": "从网站生成",
+    "sitePlaceholder": "https://company.com",
+    "siteButton": "生成种子和提示词",
+    "siteLoading": "正在读取网站...",
+    "siteDone": "已生成种子和提示词，开始前请检查。",
     "tagline": "简洁通用的群体智能引擎",
     "version": "/ v0.1-预览版",
     "heroTitle1": "上传任意报告",
@@ -451,6 +456,11 @@
     "authInvalid": "会话无效或已过期，请重新登录。",
     "authForbidden": "该账号没有使用 Noma 的权限。",
     "authUnavailable": "暂时无法验证登录（登录服务不可用），请稍后重试。",
+    "siteUrlInvalid": "链接无效。请输入完整的 http(s) 地址，例如 https://company.com。",
+    "siteUrlBlocked": "不允许该地址（仅限 80/443 端口的公开网站）。",
+    "siteFetchFailed": "无法打开该网站，请检查链接或重试。",
+    "siteNoContent": "该网站文字内容过少，无法生成种子（可能依赖 JavaScript）。",
+    "siteGenerationFailed": "暂时无法生成种子，请重试。",
     "simNotFound": "模拟不存在: {id}",
     "simConfigMissingPrepare": "模拟配置不存在，请先调用 /prepare 接口",
     "simAlreadyRunning": "模拟已在运行或结束处理中: {id}",
