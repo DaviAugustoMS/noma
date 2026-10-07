@@ -50,6 +50,25 @@ def orbit(monkeypatch):
     return fake
 
 
+@pytest.fixture
+def mirofish_logs():
+    """Mensagens do logger do módulo api_auth.
+
+    Os loggers do projeto (get_logger) têm handlers próprios e propagate=False, então
+    o caplog não os vê: o handler precisa ir no logger do próprio módulo.
+    """
+    records = []
+
+    class Collect(logging.Handler):
+        def emit(self, record):
+            records.append(record.getMessage())
+
+    handler = Collect(level=logging.DEBUG)
+    api_auth.logger.addHandler(handler)
+    yield records
+    api_auth.logger.removeHandler(handler)
+
+
 def bearer(token):
     return {"Authorization": f"Bearer {token}"}
 
@@ -127,11 +146,14 @@ def test_cache_is_bounded(orbit, monkeypatch):
     assert len(api_auth._cache._items) <= 3
 
 
-def test_token_never_reaches_logs_or_the_cache_in_clear(orbit, caplog):
-    caplog.set_level(logging.DEBUG)
+def test_token_never_reaches_logs_or_the_cache_in_clear(orbit, mirofish_logs):
     orbit.client.get(ROUTE, headers=bearer(GOOD))
     orbit.client.get(ROUTE, headers=bearer("tok-desconhecido"))
-    assert GOOD not in caplog.text and "tok-desconhecido" not in caplog.text
+    orbit.client.get(ROUTE, headers=bearer(OTHER))  # 403: este caminho escreve no log
+    text = "\n".join(mirofish_logs)
+    assert text, "o teste precisa capturar mensagens de verdade (senão ele passa vazio)"
+    for secret in (GOOD, OTHER, "tok-desconhecido"):
+        assert secret not in text
     assert GOOD not in api_auth._cache._items and all(len(k) == 64 for k in api_auth._cache._items)
 
 
@@ -152,3 +174,12 @@ def test_config_refuses_to_start_unprotected(monkeypatch):
 
     monkeypatch.setattr(Config, "API_AUTH_REQUIRED", False)
     assert not any("API_ALLOWED_EMAILS" in e for e in Config.validate())
+
+
+def test_denied_email_is_logged_for_the_operator_but_never_the_token(orbit, mirofish_logs):
+    r = orbit.client.get(ROUTE, headers=bearer(OTHER))
+    assert r.status_code == 403
+    text = "\n".join(mirofish_logs)
+    assert STRANGER in text, "o operador precisa saber qual email liberar"
+    assert "API_ALLOWED_EMAILS" in text
+    assert OTHER not in text, "o token nunca vai para o log"

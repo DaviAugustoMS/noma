@@ -22,6 +22,9 @@ import httpx
 
 from ..config import Config
 from .locale import t
+from .logger import get_logger
+
+logger = get_logger('mirofish.api_auth')
 
 _TIMEOUT = httpx.Timeout(5.0, connect=3.0)
 _NEGATIVE_TTL_SECONDS = 30.0  # tokens inválidos: evita martelar o Orbit com lixo
@@ -142,6 +145,8 @@ def authenticate(authorization_header: str | None) -> str:
     if entry.email is None:
         raise AuthFailure(401, "auth_invalid", t("err.authInvalid"))
     if entry.email not in allowed_emails():
+        # Só o email (nunca o token): diz ao operador qual conta precisa ser liberada.
+        logger.warning("Acesso negado: o email %s não está em API_ALLOWED_EMAILS", entry.email)
         raise AuthFailure(403, "auth_forbidden", t("err.authForbidden"))
     return entry.email
 
