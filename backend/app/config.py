@@ -60,6 +60,11 @@ class Config:
     
     # Configuração de upload de arquivos
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
+    # Preço por 1M de tokens (opcional): com 0 o custo não é exibido, só o volume de tokens.
+    LLM_PRICE_INPUT_PER_1M = float(os.environ.get('LLM_PRICE_INPUT_PER_1M', '0') or 0)
+    LLM_PRICE_OUTPUT_PER_1M = float(os.environ.get('LLM_PRICE_OUTPUT_PER_1M', '0') or 0)
+    LLM_PRICE_CURRENCY = os.environ.get('LLM_PRICE_CURRENCY', 'USD').strip() or 'USD'
+
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../uploads')
     ALLOWED_EXTENSIONS = {'pdf', 'md', 'txt', 'markdown'}
     

@@ -73,6 +73,11 @@ def create_simulation_model(config: Dict[str, Any], prefer_boost: bool = False):
 
     api_key, base_url, model, label = resolve_llm_settings(config, prefer_boost)
 
+    # Conta os tokens da simulação (o backend define MIROFISH_USAGE_FILE); sem a variável não faz nada.
+    from usage_meter import install as install_usage_meter
+
+    install_usage_meter()
+
     # camel-ai lê estas variáveis ao criar o modelo
     if api_key:
         os.environ["OPENAI_API_KEY"] = api_key

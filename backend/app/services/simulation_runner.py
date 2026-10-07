@@ -536,6 +536,7 @@ class SimulationRunner:
             env = os.environ.copy()
             env['PYTHONUTF8'] = '1'  # Suportado no Python 3.7+, faz todos os open() usarem UTF-8 por padrão
             env['PYTHONIOENCODING'] = 'utf-8'  # Garante que stdout/stderr usem UTF-8
+            env['MIROFISH_USAGE_FILE'] = os.path.join(sim_dir, 'llm_usage.json')  # contagem de tokens da simulação
             
             # Define o diretório de trabalho como o diretório da simulação (banco de dados e outros arquivos serão gerados aqui)
             # Usa start_new_session=True para criar um novo grupo de processos, garantindo que todos os subprocessos possam ser encerrados via os.killpg

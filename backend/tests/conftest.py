@@ -64,3 +64,14 @@ def _reset_locale():
     locale_utils.set_locale(locale_utils.DEFAULT_LOCALE)
     yield
     locale_utils.set_locale(locale_utils.DEFAULT_LOCALE)
+
+
+# O livro-razão de tokens grava em uploads/usage; os testes nunca podem sujar o real.
+@pytest.fixture(autouse=True)
+def _isolate_usage_ledger(monkeypatch, tmp_path):
+    from app.utils import usage
+
+    ledger = tmp_path / "usage"
+    ledger.mkdir()
+    monkeypatch.setattr(usage, "_dir", lambda: str(ledger))
+    yield

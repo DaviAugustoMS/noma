@@ -16,6 +16,7 @@ from ..services.simulation_runner import SimulationRunner, RunnerStatus
 from ..services.zep_graph_memory_updater import ZepGraphMemoryManager
 from ..models.project import ProjectManager, ProjectStatus
 from ..models.task import TaskManager, TaskStatus
+from ..utils import usage
 from ..utils.logger import get_logger
 from ..utils.locale import t, get_locale, set_locale
 from ..utils.zep_lifecycle import (
@@ -292,7 +293,7 @@ def generate_report():
                     unregister_graph_reader(graph_id, report_id)
 
             try:
-                thread = threading.Thread(target=run_generate, daemon=True)
+                thread = threading.Thread(target=usage.in_context(run_generate), daemon=True)
                 thread.start()
             except Exception:
                 unregister_graph_reader(graph_id, report_id)

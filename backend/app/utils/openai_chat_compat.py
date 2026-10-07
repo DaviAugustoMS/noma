@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from typing import Any, Dict, List, Optional
+from . import usage
 
 
 def is_gpt5_family(model: Optional[str]) -> bool:
@@ -73,7 +74,9 @@ def create_chat_completion(
         else:
             kwargs["max_tokens"] = max_tokens
 
-    return client.chat.completions.create(**kwargs)
+    response = client.chat.completions.create(**kwargs)
+    usage.record_response(response, messages)  # gasto de tokens (nunca levanta)
+    return response
 
 
 def extract_chat_completion_text(response: Any) -> str:

@@ -3,6 +3,7 @@
 采用项目上下文机制，服务端持久化状态
 """
 
+import json
 import os
 import re
 import traceback
@@ -23,6 +24,7 @@ from ..services.graph_builder import BatchSubmission, GraphBuilderService
 from ..services.text_processor import TextProcessor
 from ..services import site_seed
 from ..utils.file_parser import FileParser
+from ..utils import usage
 from ..utils.logger import get_logger
 from ..utils.locale import t, get_locale, set_locale
 from ..utils.zep_lifecycle import get_graph_readers, graph_lifecycle_lock
@@ -133,6 +135,23 @@ def allowed_file(filename: str) -> bool:
     return ext in Config.ALLOWED_EXTENSIONS
 
 
+def _record_seed_usage(project_id: str, raw: str) -> None:
+    """Move para o projeto o gasto da semente gerada pelo site (enviado pelo cliente em ``seed_usage``)."""
+
+    if not raw:
+        return
+    try:
+        data = json.loads(raw)
+        usage.move_seed(
+            project_id,
+            int(data.get('prompt_tokens', 0)),
+            int(data.get('completion_tokens', 0)),
+            int(data.get('calls', 0)),
+        )
+    except (ValueError, TypeError, AttributeError):
+        logger.warning("seed_usage inválido ignorado")
+
+
 @graph_bp.route('/seed/from-url', methods=['POST'])
 def seed_from_url():
     """Gera a semente (Markdown) e o prompt de simulação a partir do link de um site.
@@ -141,8 +160,11 @@ def seed_from_url():
     ``simulation_requirement`` no idioma escolhido; nada é salvo no servidor.
     """
     payload = request.get_json(silent=True) or {}
+    usage.bind(None, 'seed')
     try:
-        data = site_seed.generate_from_url(str(payload.get('url', '')))
+        with usage.capture() as spent:
+            data = site_seed.generate_from_url(str(payload.get('url', '')))
+        data['usage'] = spent.as_dict()
     except site_seed.SiteSeedError as error:
         return jsonify({"success": False, "code": error.code, "error": t(f"err.{error.code}")}), error.status
     except LLMResponseError as error:
@@ -399,6 +421,8 @@ def generate_ontology():
         # Cria o projeto
         project = ProjectManager.create_project(name=project_name)
         project.simulation_requirement = simulation_requirement
+        usage.bind(project.project_id, 'ontology')
+        _record_seed_usage(project.project_id, request.form.get('seed_usage', ''))
         logger.info(f"Criando projeto: {project.project_id}")
         
         # Salva os arquivos e extrai o texto

@@ -19,6 +19,7 @@ from ..services.simulation_runner import (
     SimulationStopPending,
 )
 from ..services.zep_graph_memory_updater import ZepGraphMemoryManager
+from ..utils import usage
 from ..utils.logger import get_logger
 from ..utils.locale import t, get_locale, set_locale, get_language_instruction
 from ..utils.zep_lifecycle import get_graph_readers, graph_lifecycle_lock
@@ -683,7 +684,7 @@ def prepare_simulation():
                     manager._save_simulation_state(state)
         
         # Inicia a thread em segundo plano
-        thread = threading.Thread(target=run_prepare, daemon=True)
+        thread = threading.Thread(target=usage.in_context(run_prepare), daemon=True)
         thread.start()
         
         return jsonify({

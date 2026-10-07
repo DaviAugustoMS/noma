@@ -18,6 +18,7 @@ from datetime import datetime
 
 from openai import OpenAI
 from ..config import Config
+from ..utils import usage
 from ..utils.logger import get_logger
 from ..utils.locale import get_json_language_instruction, get_locale, set_locale, t
 from ..utils.openai_chat_compat import create_chat_completion, extract_chat_completion_text
@@ -1062,7 +1063,7 @@ Important:
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_count) as executor:
             # Submeter todas as tarefas
             future_to_entity = {
-                executor.submit(generate_single_profile, idx, entity): (idx, entity)
+                executor.submit(usage.in_context(generate_single_profile), idx, entity): (idx, entity)
                 for idx, entity in pending
             }
             

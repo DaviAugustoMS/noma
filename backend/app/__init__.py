@@ -90,6 +90,12 @@ def create_app(config_class=Config):
             return response
         return None
 
+    # Escopo do gasto de tokens (projeto + etapa) das rotas que chamam o LLM.
+    @app.before_request
+    def bind_usage_scope():
+        from .api.usage import bind_request_scope
+        return bind_request_scope()
+
     # Middleware de log de requisições
     @app.before_request
     def validate_route_ids():
@@ -118,11 +124,12 @@ def create_app(config_class=Config):
         return response
     
     # Registra os blueprints
-    from .api import graph_bp, simulation_bp, report_bp, system_bp
+    from .api import graph_bp, simulation_bp, report_bp, system_bp, usage_bp
     app.register_blueprint(graph_bp, url_prefix='/api/graph')
     app.register_blueprint(simulation_bp, url_prefix='/api/simulation')
     app.register_blueprint(report_bp, url_prefix='/api/report')
     app.register_blueprint(system_bp, url_prefix='/api/system')
+    app.register_blueprint(usage_bp, url_prefix='/api/usage')
     
     @app.errorhandler(Exception)
     def handle_unexpected_error(error):
