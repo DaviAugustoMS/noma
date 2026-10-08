@@ -460,6 +460,8 @@
     "authInvalid": "Invalid or expired session. Sign in again.",
     "authForbidden": "This account is not allowed to use Noma.",
     "authUnavailable": "Could not verify the sign-in right now (login server unavailable). Try again shortly.",
+    "reportNotReady": "The report is not completed yet.",
+    "insightsFailed": "Could not generate the insights right now. Try again.",
     "siteUrlInvalid": "Invalid link. Enter a full http(s) address, for example https://company.com.",
     "siteUrlBlocked": "This address is not allowed (public sites on ports 80/443 only).",
     "siteFetchFailed": "Could not open the site. Check the link or try again.",
@@ -741,6 +743,7 @@
     "customSimRounds": "Custom simulation rounds: {rounds} rounds"
   },
   "report": {
+    "insights": {"title": "Insights", "positives": "Positive insights", "negatives": "Negative insights and risks", "improvements": "Improvement ideas", "avoid": "What not to use", "new_points": "New points to add"},
     "defaultReportTitle": "Simulation analysis report",
     "defaultOutlineTitle": "Future forecast report",
     "defaultOutlineSummary": "Analysis of future trends and risks based on the simulation",

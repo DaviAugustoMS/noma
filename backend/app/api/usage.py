@@ -21,6 +21,7 @@ _ENDPOINT_STAGE = {
     'simulation.interview_agents_batch': 'interviews',
     'simulation.interview_all_agents': 'interviews',
     'report.generate_report': 'report',
+    'report.generate_report_insights': 'report',
     'report.chat_with_report_agent': 'chat',
     'report.search_graph_tool': 'report',
     'report.get_graph_statistics_tool': 'report',
@@ -61,7 +62,7 @@ def bind_request_scope():
         project_id = resolve_project(
             body.get('project_id') or request.args.get('project_id'),
             body.get('simulation_id') or request.args.get('simulation_id'),
-            body.get('report_id') or request.args.get('report_id'),
+            body.get('report_id') or request.args.get('report_id') or (request.view_args or {}).get('report_id'),
         )
         usage.bind(project_id, stage)
     except Exception:  # noqa: BLE001 - contar nunca pode derrubar a requisição

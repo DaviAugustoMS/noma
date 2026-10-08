@@ -394,6 +394,39 @@ def get_generate_status():
 
 # ============== Interface de obtenção de relatório ==============
 
+@report_bp.route('/<report_id>/insights', methods=['GET'])
+def get_report_insights(report_id: str):
+    """Insights salvos do relatório (``data`` é null se ainda não foram gerados)."""
+
+    from ..services import report_insights
+
+    if not ReportManager.get_report(report_id):
+        return jsonify({"success": False, "error": t('api.reportNotFound', id=report_id)}), 404
+    folder = ReportManager._get_report_folder(report_id)
+    return jsonify({"success": True, "data": report_insights.load(folder)})
+
+
+@report_bp.route('/<report_id>/insights', methods=['POST'])
+def generate_report_insights(report_id: str):
+    """Gera (ou regenera) os insights de um relatório concluído e os anexa ao Markdown."""
+
+    from ..services import report_insights
+
+    report = ReportManager.get_report(report_id)
+    if not report:
+        return jsonify({"success": False, "error": t('api.reportNotFound', id=report_id)}), 404
+    if report.status != ReportStatus.COMPLETED or not (report.markdown_content or "").strip():
+        return jsonify({"success": False, "code": "reportNotReady", "error": t('err.reportNotReady')}), 409
+    try:
+        insights = report_insights.generate_insights(report.markdown_content, report.simulation_requirement)
+    except Exception as error:  # noqa: BLE001
+        logger.warning("Falha ao gerar insights de %s: %s", report_id, type(error).__name__)
+        return jsonify({"success": False, "code": "insightsFailed", "error": t('err.insightsFailed')}), 502
+    ReportManager.attach_insights(report, insights)
+    ReportManager.save_report(report)
+    return jsonify({"success": True, "data": insights})
+
+
 @report_bp.route('/<report_id>', methods=['GET'])
 def get_report(report_id: str):
     """

@@ -1754,6 +1754,18 @@ class ReportAgent:
             report.markdown_content = ReportManager.assemble_full_report(report_id, outline)
             report.status = ReportStatus.COMPLETED
             report.completed_at = datetime.now().isoformat()
+
+            # Insights (positivos, negativos, melhorias...): uma chamada extra; se falhar, o
+            # relatório continua válido e os insights podem ser gerados depois pela API.
+            try:
+                from . import report_insights
+
+                ReportManager.attach_insights(
+                    report,
+                    report_insights.generate_insights(report.markdown_content, report.simulation_requirement),
+                )
+            except Exception as insights_error:  # noqa: BLE001
+                logger.warning("Insights do relatório não gerados: %s", type(insights_error).__name__)
             
             # Calcular o tempo total gasto
             total_time_seconds = (datetime.now() - start_time).total_seconds()
@@ -2536,6 +2548,15 @@ class ReportManager:
         
         return '\n'.join(result_lines)
     
+    @classmethod
+    def attach_insights(cls, report: Report, insights: dict) -> None:
+        """Grava insights.json e os anexa ao Markdown do relatório (substitui a seção anterior)."""
+
+        from . import report_insights
+
+        report_insights.save(cls._ensure_report_folder(report.report_id), insights)
+        report.markdown_content = report_insights.merge_into_markdown(report.markdown_content, insights)
+
     @classmethod
     def save_report(cls, report: Report) -> None:
         """保存报告元信息和完整报告"""

@@ -460,6 +460,8 @@
     "authInvalid": "Sessão inválida ou expirada. Entre novamente.",
     "authForbidden": "Esta conta não tem permissão para usar o Noma.",
     "authUnavailable": "Não foi possível confirmar o login agora (servidor de login indisponível). Tente de novo em instantes.",
+    "reportNotReady": "O relatório ainda não está concluído.",
+    "insightsFailed": "Não foi possível gerar os insights agora. Tente novamente.",
     "siteUrlInvalid": "Link inválido. Informe um endereço http(s) completo, por exemplo https://empresa.com.br.",
     "siteUrlBlocked": "Este endereço não é permitido (só sites públicos nas portas 80/443).",
     "siteFetchFailed": "Não foi possível abrir o site. Confira o link ou tente novamente.",
@@ -741,6 +743,7 @@
     "customSimRounds": "Rodadas de simulação personalizadas: {rounds} rodadas"
   },
   "report": {
+    "insights": {"title": "Insights", "positives": "Insights positivos", "negatives": "Insights negativos e riscos", "improvements": "Ideias de melhoria", "avoid": "O que não usar", "new_points": "Pontos novos a adicionar"},
     "defaultReportTitle": "Relatório de análise da simulação",
     "defaultOutlineTitle": "Relatório de previsão do futuro",
     "defaultOutlineSummary": "Análise de tendências futuras e riscos com base na simulação",

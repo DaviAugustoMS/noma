@@ -460,6 +460,8 @@
     "authInvalid": "会话无效或已过期，请重新登录。",
     "authForbidden": "该账号没有使用 Noma 的权限。",
     "authUnavailable": "暂时无法验证登录（登录服务不可用），请稍后重试。",
+    "reportNotReady": "报告尚未完成。",
+    "insightsFailed": "暂时无法生成洞察，请重试。",
     "siteUrlInvalid": "链接无效。请输入完整的 http(s) 地址，例如 https://company.com。",
     "siteUrlBlocked": "不允许该地址（仅限 80/443 端口的公开网站）。",
     "siteFetchFailed": "无法打开该网站，请检查链接或重试。",
@@ -741,6 +743,7 @@
     "customSimRounds": "自定义模拟轮数: {rounds} 轮"
   },
   "report": {
+    "insights": {"title": "洞察", "positives": "正面洞察", "negatives": "负面洞察与风险", "improvements": "改进建议", "avoid": "不应使用的内容", "new_points": "可新增的要点"},
     "defaultReportTitle": "模拟分析报告",
     "defaultOutlineTitle": "未来预测报告",
     "defaultOutlineSummary": "基于模拟预测的未来趋势与风险分析",
