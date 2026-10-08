@@ -369,6 +369,9 @@
     "world2": "World 2"
   },
   "step5": {
+    "downloadReport": "Download report",
+    "downloading": "Downloading...",
+    "downloadFailed": "Could not download the report. Try again.",
     "chatRoleUser": "Interviewer",
     "chatRoleAgent": "You",
     "chatHistoryIntro": "Here is our conversation so far:",

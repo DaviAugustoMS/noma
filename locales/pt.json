@@ -369,6 +369,9 @@
     "world2": "Mundo 2"
   },
   "step5": {
+    "downloadReport": "Baixar relatório",
+    "downloading": "Baixando...",
+    "downloadFailed": "Não foi possível baixar o relatório. Tente novamente.",
     "chatRoleUser": "Entrevistador",
     "chatRoleAgent": "Você",
     "chatHistoryIntro": "Esta é a nossa conversa até agora:",

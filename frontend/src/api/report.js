@@ -35,6 +35,16 @@ export const getConsoleLog = (reportId, fromLine = 0) => {
 }
 
 /**
+ * Baixa o relatório em Markdown. É um GET autenticado, então não dá para usar um link
+ * simples: o arquivo vem como Blob e o download é disparado no navegador.
+ * @param {string} reportId
+ * @returns {Promise<Blob>}
+ */
+export const downloadReport = (reportId) => {
+  return service.get(`/api/report/${encodeURIComponent(reportId)}/download`, { responseType: 'blob' })
+}
+
+/**
  * Obtém os detalhes do relatório
  * @param {string} reportId
  */

@@ -369,6 +369,9 @@
     "world2": "世界2"
   },
   "step5": {
+    "downloadReport": "下载报告",
+    "downloading": "下载中...",
+    "downloadFailed": "无法下载报告，请重试。",
     "chatRoleUser": "提问者",
     "chatRoleAgent": "你",
     "chatHistoryIntro": "以下是我们之前的对话：",

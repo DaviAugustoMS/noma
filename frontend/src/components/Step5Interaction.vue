@@ -10,7 +10,20 @@
             <div class="report-meta">
               <span class="report-tag">Prediction Report</span>
               <span class="report-id">ID: {{ reportId || 'REF-2024-X92' }}</span>
+              <button
+                v-if="reportId"
+                type="button"
+                class="download-btn"
+                :disabled="downloading"
+                @click="handleDownloadReport"
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" />
+                </svg>
+                {{ downloading ? $t('step5.downloading') : $t('step5.downloadReport') }}
+              </button>
             </div>
+            <p v-if="downloadError" class="download-error" role="alert">{{ downloadError }}</p>
             <h1 class="main-title">{{ reportOutline.title }}</h1>
             <p class="sub-title">{{ reportOutline.summary }}</p>
             <div class="header-divider"></div>
@@ -413,10 +426,36 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { chatWithReport, getReport, getAgentLog } from '../api/report'
+import { chatWithReport, getReport, getAgentLog, downloadReport } from '../api/report'
 import { interviewAgents, getSimulationProfilesRealtime } from '../api/simulation'
 
 const { t } = useI18n()
+
+const downloading = ref(false)
+const downloadError = ref('')
+
+// Baixa o relatório (.md) pelo backend autenticado e salva no computador.
+const handleDownloadReport = async () => {
+  if (!props.reportId || downloading.value) return
+  downloading.value = true
+  downloadError.value = ''
+  try {
+    const blob = await downloadReport(props.reportId)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `relatorio-${props.reportId}.md`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch {
+    // Não logamos o erro: o objeto do axios carrega a requisição inteira.
+    downloadError.value = t('step5.downloadFailed')
+  } finally {
+    downloading.value = false
+  }
+}
 
 const props = defineProps({
   reportId: String,
@@ -1043,6 +1082,38 @@ watch(() => props.simulationId, (newId) => {
   padding: 4px 8px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.download-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid #000000;
+  background: #FFFFFF;
+  color: #000000;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.download-btn:hover:not(:disabled) {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+.download-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.download-error {
+  margin: -12px 0 12px;
+  color: #B91C1C;
+  font-size: 12px;
 }
 
 .report-id {
