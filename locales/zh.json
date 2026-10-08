@@ -369,6 +369,11 @@
     "world2": "世界2"
   },
   "step5": {
+    "insightsTitle": "洞察与下一步",
+    "insightsGenerate": "生成洞察",
+    "insightsGenerating": "正在生成洞察...",
+    "insightsEmpty": "该报告暂无洞察。",
+    "insightsNone": "该类别暂无相关内容。",
     "downloadReport": "下载报告",
     "downloading": "下载中...",
     "downloadFailed": "无法下载报告，请重试。",

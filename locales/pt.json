@@ -369,6 +369,11 @@
     "world2": "Mundo 2"
   },
   "step5": {
+    "insightsTitle": "Insights e próximos passos",
+    "insightsGenerate": "Gerar insights",
+    "insightsGenerating": "Gerando insights...",
+    "insightsEmpty": "Ainda não há insights para este relatório.",
+    "insightsNone": "Nada relevante nesta categoria.",
     "downloadReport": "Baixar relatório",
     "downloading": "Baixando...",
     "downloadFailed": "Não foi possível baixar o relatório. Tente novamente.",

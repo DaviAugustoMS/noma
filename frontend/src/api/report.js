@@ -59,3 +59,13 @@ export const getReport = (reportId) => {
 export const chatWithReport = (data) => {
   return service.post('/api/report/chat', data)
 }
+
+/** Insights salvos do relatório (data é null se ainda não foram gerados) */
+export const getReportInsights = (reportId) => {
+  return service.get(`/api/report/${encodeURIComponent(reportId)}/insights`)
+}
+
+/** Gera (ou regenera) os insights: positivos, negativos, melhorias, o que evitar e pontos novos */
+export const generateReportInsights = (reportId) => {
+  return service.post(`/api/report/${encodeURIComponent(reportId)}/insights`)
+}

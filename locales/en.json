@@ -369,6 +369,11 @@
     "world2": "World 2"
   },
   "step5": {
+    "insightsTitle": "Insights and next steps",
+    "insightsGenerate": "Generate insights",
+    "insightsGenerating": "Generating insights...",
+    "insightsEmpty": "No insights for this report yet.",
+    "insightsNone": "Nothing relevant in this category.",
     "downloadReport": "Download report",
     "downloading": "Downloading...",
     "downloadFailed": "Could not download the report. Try again.",

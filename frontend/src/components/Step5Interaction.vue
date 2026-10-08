@@ -76,6 +76,8 @@
               </div>
             </div>
           </div>
+
+          <ReportInsights v-if="reportId" :report-id="reportId" />
         </div>
 
         <!-- Waiting State -->
@@ -427,6 +429,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chatWithReport, getReport, getAgentLog, downloadReport } from '../api/report'
+import ReportInsights from './ReportInsights.vue'
 import { interviewAgents, getSimulationProfilesRealtime } from '../api/simulation'
 
 const { t } = useI18n()
